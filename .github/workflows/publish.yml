@@ -1,0 +1,186 @@
+name: Test and publish Docker images
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ghcr-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  test:
+    name: Build and test the application
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      app_image_id: ${{ steps.archives.outputs.app_id }}
+      db_image_id: ${{ steps.archives.outputs.db_id }}
+    steps:
+      - name: Check out the exact commit
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Build the PHP application for testing
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: Dockerfile.production
+          platforms: linux/amd64
+          load: true
+          push: false
+          tags: vueports-ci-app:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=production-app
+          cache-to: type=gha,mode=max,scope=production-app
+
+      - name: Build the database initialization image for testing
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: Dockerfile.mysql
+          platforms: linux/amd64
+          load: true
+          push: false
+          tags: vueports-ci-mysql:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=production-mysql
+          cache-to: type=gha,mode=max,scope=production-mysql
+
+      - name: Check the running application and database
+        env:
+          APP_IMAGE: vueports-ci-app:${{ github.sha }}
+          DB_IMAGE: vueports-ci-mysql:${{ github.sha }}
+        run: bash scripts/ci-smoke.sh
+
+      - name: Save the exact tested images for publication
+        id: archives
+        if: >-
+          github.event_name != 'pull_request' &&
+          (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+        env:
+          APP_IMAGE: vueports-ci-app:${{ github.sha }}
+          DB_IMAGE: vueports-ci-mysql:${{ github.sha }}
+        run: |
+          set -euo pipefail
+          printf 'app_id=%s\n' "$(docker image inspect --format '{{.Id}}' "$APP_IMAGE")" >> "$GITHUB_OUTPUT"
+          printf 'db_id=%s\n' "$(docker image inspect --format '{{.Id}}' "$DB_IMAGE")" >> "$GITHUB_OUTPUT"
+          docker image save "$APP_IMAGE" | gzip > "$RUNNER_TEMP/application-image.tar.gz"
+          docker image save "$DB_IMAGE" | gzip > "$RUNNER_TEMP/database-image.tar.gz"
+
+      - name: Upload the tested application image
+        if: >-
+          github.event_name != 'pull_request' &&
+          (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: application-image
+          path: ${{ runner.temp }}/application-image.tar.gz
+          compression-level: 0
+          retention-days: 1
+          if-no-files-found: error
+          overwrite: true
+
+      - name: Upload the tested database image
+        if: >-
+          github.event_name != 'pull_request' &&
+          (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: database-image
+          path: ${{ runner.temp }}/database-image.tar.gz
+          compression-level: 0
+          retention-days: 1
+          if-no-files-found: error
+          overwrite: true
+
+  publish:
+    name: Publish ${{ matrix.name }} to GHCR
+    needs: test
+    if: >-
+      github.event_name != 'pull_request' &&
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: application
+            suffix: ""
+            local_image: vueports-ci-app
+          - name: database
+            suffix: -mysql
+            local_image: vueports-ci-mysql
+    steps:
+      - name: Download the tested image from this workflow run
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: ${{ matrix.name }}-image
+          path: ${{ runner.temp }}/tested-image
+
+      - name: Load and verify the tested image identity
+        env:
+          IMAGE_ARCHIVE: ${{ runner.temp }}/tested-image/${{ matrix.name }}-image.tar.gz
+          LOCAL_IMAGE: ${{ matrix.local_image }}:${{ github.sha }}
+          EXPECTED_IMAGE_ID: ${{ matrix.name == 'application' && needs.test.outputs.app_image_id || needs.test.outputs.db_image_id }}
+        run: |
+          set -euo pipefail
+          gzip --decompress --stdout "$IMAGE_ARCHIVE" | docker image load
+          test -n "$EXPECTED_IMAGE_ID"
+          test "$(docker image inspect --format '{{.Id}}' "$LOCAL_IMAGE")" = "$EXPECTED_IMAGE_ID"
+
+      - name: Set the lowercase registry image name
+        id: image
+        env:
+          IMAGE_SUFFIX: ${{ matrix.suffix }}
+        run: printf 'name=ghcr.io/%s%s\n' "${GITHUB_REPOSITORY,,}" "$IMAGE_SUFFIX" >> "$GITHUB_OUTPUT"
+
+      - name: Sign in to GitHub Container Registry
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set registry tags
+        id: metadata
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+        with:
+          images: ${{ steps.image.outputs.name }}
+          flavor: latest=false
+          tags: |
+            type=sha,format=long
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=ref,event=tag
+
+      - name: Publish the exact tested image
+        env:
+          LOCAL_IMAGE: ${{ matrix.local_image }}:${{ github.sha }}
+          IMAGE_TAGS: ${{ steps.metadata.outputs.tags }}
+        run: |
+          set -euo pipefail
+          while IFS= read -r tag; do
+            test -n "$tag" || continue
+            docker image tag "$LOCAL_IMAGE" "$tag"
+            docker image push "$tag"
+          done <<< "$IMAGE_TAGS"

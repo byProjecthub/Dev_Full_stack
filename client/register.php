@@ -1,18 +1,25 @@
 <?php
 declare(strict_types=1);
-require_once '../includes/functions.php';
-require_once '../includes/emails.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/emails.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 if (isClient()) redirect('dashboard.php');
 
 $error = ''; 
 $success = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !verifyCsrf($_POST['csrf_token'] ?? '')) {
+    http_response_code(403);
+    $error = 'Invalid security token.';
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name    = sanitize($_POST['full_name'] ?? '');
     $email   = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
     $phone   = sanitize($_POST['phone'] ?? '');
-    $company = sanitize($_POST['company'] ?? '');
+    $company = sanitize($_POST['company_name'] ?? '');
     $pass    = $_POST['password'] ?? '';
     $confirm = $_POST['confirm_password'] ?? '';
 
@@ -58,6 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php if ($error): ?><div class="alert alert-error"><?= $error ?></div><?php endif; ?>
         <?php if ($success): ?><div class="alert" style="background:#dcfce7; color:#166534; border:1px solid #22c55e;"><?= $success ?></div><?php endif; ?>
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="<?php echo csrfToken(); ?>">
             <div class="form-group"><label>Full Name *</label><input type="text" name="full_name" required></div>
             <div class="form-group"><label>Email *</label><input type="email" name="email" required></div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">

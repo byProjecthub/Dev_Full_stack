@@ -243,234 +243,157 @@ function getBlogPostBySlug(string $slug): ?array {
     return $row ?: null;
 }
 
-// REPLACE your existing getPortfolioItems() with this:
+/* ========================================
+   Portfolio Helpers
+   ======================================== */
+
+/** Normalize database JSON fields and preserve the view's existing field names. */
+function formatPortfolioItem(array $item): array {
+    $imagePath = static function (string $path): string {
+        if ($path !== '' && !str_contains($path, '/')) {
+            return 'images/' . $path;
+        }
+        return $path;
+    };
+
+    $item['image'] = $imagePath($item['image'] ?? '');
+    $item['gallery'] = array_map($imagePath, safeJsonDecode($item['gallery'] ?? null));
+    $item['technologies'] = safeJsonDecode($item['technologies'] ?? null);
+    $item['tech_stack'] = $item['technologies'];
+    $item['live_url'] = $item['project_url'] ?? null;
+    return $item;
+}
+
 function getPortfolioItems(int $limit = 6, string $status = 'active'): array {
     $db = db();
-    if (!$db) return [];
-    
+    if (!$db || $limit <= 0 || !in_array($status, ['active', 'draft', 'archived'], true)) return [];
+
     try {
         $stmt = $db->prepare("
-            SELECT * FROM portfolio 
-            WHERE status = ? 
-            ORDER BY sort_order ASC, created_at DESC 
+            SELECT * FROM portfolio_items
+            WHERE status = ?
+            ORDER BY sort_order ASC, created_at DESC, id DESC
             LIMIT ?
         ");
-        $stmt->execute([$status, $limit]);
-        $items = $stmt->fetchAll();
-        
-        foreach ($items as &$item) {
-            // Handle image path
-            if (!empty($item['image']) && !str_starts_with($item['image'], 'http') && !str_starts_with($item['image'], 'assets/')) {
-                $item['image'] = 'assets/images/' . $item['image'];
-            }
-            // Parse JSON fields
-            $item['gallery'] = safeJsonDecode($item['gallery'] ?? null);
-            $item['tech_stack'] = safeJsonDecode($item['tech_stack'] ?? null);
-            $item['results'] = safeJsonDecode($item['results'] ?? null);
-        }
-        unset($item);
-        
-        return $items;
-        
+        $stmt->bindValue(1, $status);
+        $stmt->bindValue(2, $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return array_map('formatPortfolioItem', $stmt->fetchAll());
     } catch (PDOException $e) {
         error_log("getPortfolioItems error: " . $e->getMessage());
         return [];
     }
 }
 
-
-// ============================================================
-// DATABASE CONNECTION (reuse your existing or use this)
-// ============================================================
-
-
-
-
-/* ========================================
-   Portfolio Helpers — FIXED
-   ======================================== */
-
-/**
- * Get a single portfolio item by slug
- * Uses 'portfolio' table (not 'portfolio_items')
- * @param string $slug
- * @return array|null
- */
+/** Get a published portfolio item by its unique slug. */
 function getPortfolioItemBySlug(string $slug): ?array {
     $db = db();
     if (!$db) return null;
-    
+
     try {
-        $stmt = $db->prepare("
-            SELECT * FROM portfolio 
-            WHERE slug = ? AND status = 'active' 
-            LIMIT 1
-        ");
+        $stmt = $db->prepare("SELECT * FROM portfolio_items WHERE slug = ? AND status = 'active' LIMIT 1");
         $stmt->execute([$slug]);
         $row = $stmt->fetch();
-        
-        if (!$row) return null;
-        
-        // Parse JSON fields
-        $row['gallery'] = safeJsonDecode($row['gallery'] ?? null);
-        $row['tech_stack'] = safeJsonDecode($row['tech_stack'] ?? null);
-        $row['results'] = safeJsonDecode($row['results'] ?? null);
-        
-        return $row;
-        
+        return $row ? formatPortfolioItem($row) : null;
     } catch (PDOException $e) {
         error_log("getPortfolioItemBySlug error: " . $e->getMessage());
         return null;
     }
 }
 
-/**
- * Get related projects (same service type, excluding current)
- * @param string $slug
- * @param int $limit
- * @return array
- */
+/** Prefer the same service type, then fill with other published projects. */
 function getRelatedProjects(string $slug, int $limit = 3): array {
     $db = db();
-    if (!$db) return [];
-    
+    if (!$db || $limit <= 0) return [];
+
     try {
-        // First try same service type
         $stmt = $db->prepare("
-            SELECT p.* FROM portfolio p
-            WHERE p.status = 'active' 
-              AND p.slug != ?
-              AND p.service_type = (
-                  SELECT service_type FROM portfolio WHERE slug = ? LIMIT 1
-              )
-            ORDER BY p.sort_order, p.created_at DESC
+            SELECT p.* FROM portfolio_items p
+            WHERE p.status = 'active' AND p.slug != ?
+            ORDER BY CASE WHEN p.service_type = (
+                SELECT service_type FROM portfolio_items WHERE slug = ? LIMIT 1
+            ) THEN 0 ELSE 1 END, p.sort_order ASC, p.created_at DESC, p.id DESC
             LIMIT ?
         ");
-        $stmt->execute([$slug, $slug, $limit]);
-        $related = $stmt->fetchAll();
-        
-        // If not enough, fill with other active projects
-        if (count($related) < $limit) {
-            $existingSlugs = array_column($related, 'slug');
-            $existingSlugs[] = $slug;
-            $placeholders = implode(',', array_fill(0, count($existingSlugs), '?'));
-            
-            $needed = $limit - count($related);
-            $stmt2 = $db->prepare("
-                SELECT * FROM portfolio 
-                WHERE status = 'active' 
-                  AND slug NOT IN ($placeholders)
-                ORDER BY sort_order, created_at DESC
-                LIMIT ?
-            ");
-            $params = array_merge($existingSlugs, [$needed]);
-            $stmt2->execute($params);
-            $fill = $stmt2->fetchAll();
-            $related = array_merge($related, $fill);
-        }
-        
-        // Parse JSON fields
-        foreach ($related as &$item) {
-            $item['gallery'] = safeJsonDecode($item['gallery'] ?? null);
-            $item['tech_stack'] = safeJsonDecode($item['tech_stack'] ?? null);
-            $item['results'] = safeJsonDecode($item['results'] ?? null);
-        }
-        unset($item);
-        
-        return $related;
-        
+        $stmt->bindValue(1, $slug);
+        $stmt->bindValue(2, $slug);
+        $stmt->bindValue(3, $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return array_map('formatPortfolioItem', $stmt->fetchAll());
     } catch (PDOException $e) {
         error_log("getRelatedProjects error: " . $e->getMessage());
         return [];
     }
 }
 
-/**
- * Get all portfolio service types/categories
- * @return array
- */
 function getPortfolioCategories(): array {
     $db = db();
     if (!$db) return [];
-    
+
     try {
         $stmt = $db->query("
-            SELECT DISTINCT service_type 
-            FROM portfolio 
-            WHERE status = 'active' 
+            SELECT DISTINCT service_type FROM portfolio_items
+            WHERE status = 'active' AND service_type IS NOT NULL AND service_type != ''
             ORDER BY service_type
         ");
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
-        
     } catch (PDOException $e) {
         error_log("getPortfolioCategories error: " . $e->getMessage());
         return [];
     }
 }
 
-/**
- * Create or update a portfolio item
- * @param array $data
- * @return bool
- */
+/** Create or update an item using columns from the shipped portfolio schema. */
 function savePortfolioItem(array $data): bool {
     $db = db();
     if (!$db) return false;
-    
+
+    // Accept the existing view names without trying to store nonexistent columns.
+    foreach (['tech_stack' => 'technologies', 'live_url' => 'project_url'] as $alias => $column) {
+        if (array_key_exists($alias, $data)) {
+            if (!array_key_exists($column, $data)) $data[$column] = $data[$alias];
+            unset($data[$alias]);
+        }
+    }
+    $id = (int)($data['id'] ?? 0);
+    unset($data['id']);
+    $columns = ['title', 'slug', 'description', 'client_name', 'service_type', 'technologies',
+        'image', 'gallery', 'project_url', 'github_url', 'testimonial', 'testimonial_author',
+        'sort_order', 'status'];
+    if (!$data || array_diff(array_keys($data), $columns)) return false;
+    if (isset($data['status']) && !in_array($data['status'], ['active', 'draft', 'archived'], true)) return false;
+
     try {
-        // Encode arrays to JSON
-        if (isset($data['gallery']) && is_array($data['gallery'])) {
-            $data['gallery'] = json_encode($data['gallery']);
-        }
-        if (isset($data['tech_stack']) && is_array($data['tech_stack'])) {
-            $data['tech_stack'] = json_encode($data['tech_stack']);
-        }
-        if (isset($data['results']) && is_array($data['results'])) {
-            $data['results'] = json_encode($data['results']);
-        }
-        
-        if (!empty($data['id'])) {
-            // Update
-            $fields = [];
-            $values = [];
-            foreach ($data as $key => $val) {
-                if ($key !== 'id') {
-                    $fields[] = "$key = ?";
-                    $values[] = $val;
-                }
+        foreach (['gallery', 'technologies'] as $column) {
+            if (isset($data[$column]) && is_array($data[$column])) {
+                $data[$column] = json_encode($data[$column], JSON_THROW_ON_ERROR);
             }
-            $values[] = $data['id'];
-            $sql = "UPDATE portfolio SET " . implode(', ', $fields) . " WHERE id = ?";
-            $stmt = $db->prepare($sql);
-            return $stmt->execute($values);
-        } else {
-            // Insert
-            $keys = array_keys($data);
-            $placeholders = array_fill(0, count($keys), '?');
-            $sql = "INSERT INTO portfolio (" . implode(', ', $keys) . ") VALUES (" . implode(', ', $placeholders) . ")";
-            $stmt = $db->prepare($sql);
-            return $stmt->execute(array_values($data));
         }
-        
-    } catch (PDOException $e) {
+
+        if ($id > 0) {
+            $fields = array_map(static fn(string $column): string => "`$column` = ?", array_keys($data));
+            $stmt = $db->prepare("UPDATE portfolio_items SET " . implode(', ', $fields) . " WHERE id = ?");
+            return $stmt->execute([...array_values($data), $id]);
+        }
+
+        $fields = '`' . implode('`, `', array_keys($data)) . '`';
+        $placeholders = implode(', ', array_fill(0, count($data), '?'));
+        $stmt = $db->prepare("INSERT INTO portfolio_items ($fields) VALUES ($placeholders)");
+        return $stmt->execute(array_values($data));
+    } catch (PDOException | JsonException $e) {
         error_log("savePortfolioItem error: " . $e->getMessage());
         return false;
     }
 }
 
-/**
- * Delete a portfolio item (soft delete)
- * @param int $id
- * @return bool
- */
+/** Archive an item without deleting its stored content. */
 function deletePortfolioItem(int $id): bool {
     $db = db();
-    if (!$db) return false;
-    
+    if (!$db || $id <= 0) return false;
+
     try {
-        $stmt = $db->prepare("UPDATE portfolio SET status = 'inactive' WHERE id = ?");
+        $stmt = $db->prepare("UPDATE portfolio_items SET status = 'archived' WHERE id = ?");
         return $stmt->execute([$id]);
-        
     } catch (PDOException $e) {
         error_log("deletePortfolioItem error: " . $e->getMessage());
         return false;
@@ -1141,13 +1064,16 @@ function loadEnv(): array {
 $env = loadEnv();
 foreach ($env as $key => $value) {
     if (!isset($_ENV[$key])) {
-        $_ENV[$key] = $value;
-        putenv("$key=$value");
+        $existing = getenv($key);
+        $_ENV[$key] = $existing === false ? $value : $existing;
+        if ($existing === false) {
+            putenv("$key=$value");
+        }
     }
 }
 
 // Session security — FIXED: Only start if not already active
-if (session_status() === PHP_SESSION_NONE) {
+if (PHP_SAPI !== 'cli' && session_status() === PHP_SESSION_NONE) {
     ini_set('session.cookie_httponly', '1');
     ini_set('session.cookie_secure', $_ENV['SESSION_SECURE'] ?? '0');
     ini_set('session.cookie_samesite', $_ENV['SESSION_SAMESITE'] ?? 'Lax');

@@ -1,0 +1,48 @@
+name: vueports
+services:
+  app:
+    image: ghcr.io/${GHCR_OWNER:-byprojecthub}/${GHCR_REPOSITORY:-dev_full_stack}:${IMAGE_TAG:?Set IMAGE_TAG to a published sha-commit tag}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${APP_PORT:-8080}:80"
+    environment:
+      MYSQLHOST: db
+      MYSQLPORT: "3306"
+      MYSQLDATABASE: vueports_database
+      MYSQLUSER: vueports
+      MYSQLPASSWORD: ${MYSQLPASSWORD:?Set MYSQLPASSWORD on the deployment host}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET on the deployment host}
+      APP_URL: ${APP_URL:?Set APP_URL to the public HTTPS origin}
+      SESSION_SECURE: ${SESSION_SECURE:-1}
+      SESSION_SAMESITE: Lax
+    volumes:
+      - uploads:/app/uploads
+      - logs:/app/logs
+      - cache:/app/cache
+      - sessions:/app/sessions
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: ghcr.io/${GHCR_OWNER:-byprojecthub}/${GHCR_REPOSITORY:-dev_full_stack}-mysql:${IMAGE_TAG:?Set IMAGE_TAG to a published sha-commit tag}
+    restart: unless-stopped
+    command: ["--lower-case-table-names=1", "--skip-log-bin"]
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD on the deployment host}
+      MYSQL_DATABASE: vueports_database
+      MYSQL_USER: vueports
+      MYSQL_PASSWORD: ${MYSQLPASSWORD:?Set MYSQLPASSWORD on the deployment host}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$${MYSQL_ROOT_PASSWORD}\" mysql --protocol=TCP --host=127.0.0.1 --user=root --execute='SELECT 1' > /dev/null"]
+      interval: 3s
+      timeout: 5s
+      retries: 60
+      start_period: 20s
+volumes:
+  db_data:
+  uploads:
+  logs:
+  cache:
+  sessions:

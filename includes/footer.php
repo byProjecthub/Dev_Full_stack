@@ -6,7 +6,7 @@
   <div class="container">
     <div class="footer-grid">
       <div class="footer-brand">
-        <div class="logo"> <a href="index.php" class="logo">
+        <div class="logo"> <a href="/index.php" class="logo">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="200" height="50">
                         <defs>
                             <linearGradient id="vGradF" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -45,31 +45,31 @@
       <div class="footer-column">
         <h4>Services</h4>
         <ul>
-          <li><a href="services.php">Custom Software</a></li>
-          <li><a href="services.php">Data Engineering</a></li>
-          <li><a href="services.php">AI Agents</a></li>
-          <li><a href="services.php">Cloud & DevOps</a></li>
-          <li><a href="services.php">Consulting</a></li>
+          <li><a href="/services.php">Custom Software</a></li>
+          <li><a href="/services.php">Data Engineering</a></li>
+          <li><a href="/services.php">AI Agents</a></li>
+          <li><a href="/services.php">Cloud & DevOps</a></li>
+          <li><a href="/services.php">Consulting</a></li>
         </ul>
       </div>
 
       <div class="footer-column">
         <h4>Company</h4>
         <ul>
-          <li><a href="about.php">About Us</a></li>
-          <li><a href="portfolio.php">Portfolio</a></li>
-          <li><a href="pricing.php">Pricing</a></li>
-          <li><a href="contact.php">Contact</a></li>
+          <li><a href="/about.php">About Us</a></li>
+          <li><a href="/portfolio.php">Portfolio</a></li>
+          <li><a href="/pricing.php">Pricing</a></li>
+          <li><a href="/contact.php">Contact</a></li>
         </ul>
       </div>
 
       <div class="footer-column">
         <h4>Resources</h4>
         <ul>
-          <li><a href="consultation.php">Free Consultation</a></li>
-          <li><a href="calculator.php">Price Calculator</a></li>
-          <li><a href="booking.php">Book a Meeting</a></li>
-          <li><a href="login.php">Client Portal</a></li>
+          <li><a href="/consultation.php">Free Consultation</a></li>
+          <li><a href="/calculator.php">Price Calculator</a></li>
+          <li><a href="/booking.php">Book a Meeting</a></li>
+          <li><a href="/login.php">Client Portal</a></li>
         </ul>
       </div>
     </div>

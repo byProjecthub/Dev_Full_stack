@@ -1,11 +1,19 @@
 <?php
 declare(strict_types=1);
 
-$host = $_ENV['MYSQLHOST'] ?? 'mysql.railway.internal';
-$port = $_ENV['MYSQLPORT'] ?? '3306';
-$dbname = $_ENV['MYSQLDATABASE'] ?? 'railway';
-$username = $_ENV['MYSQLUSER'] ?? 'root';
-$password = $_ENV['MYSQLPASSWORD'] ?? '';
+require_once __DIR__ . '/env.php';
+
+// getenv() also works when PHP's variables_order does not populate $_ENV.
+$databaseValue = static function (string $name, string $default): string {
+    $value = $_ENV[$name] ?? getenv($name);
+    return $value === false ? $default : (string) $value;
+};
+
+$host = $databaseValue('MYSQLHOST', '127.0.0.1');
+$port = $databaseValue('MYSQLPORT', '3306');
+$dbname = $databaseValue('MYSQLDATABASE', 'vueports_database');
+$username = $databaseValue('MYSQLUSER', 'root');
+$password = $databaseValue('MYSQLPASSWORD', '');
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=$charset";
@@ -21,5 +29,6 @@ try {
     $pdo->exec("SET NAMES $charset COLLATE utf8mb4_unicode_ci");
 } catch (\PDOException $e) {
     error_log("DB Error: " . $e->getMessage());
-    die("Database connection failed: " . $e->getMessage());
+    http_response_code(503);
+    die('Database connection failed.');
 }

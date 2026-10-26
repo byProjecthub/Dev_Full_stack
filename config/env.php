@@ -4,8 +4,13 @@
 if (file_exists(__DIR__ . '/../.env')) {
     $lines = file(__DIR__ . '/../.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
-        if (strpos($line, '#') === 0) continue;
-        putenv($line);
+        $line = trim($line);
+        if ($line === '' || str_starts_with($line, '#') || !str_contains($line, '=')) continue;
+        [$name, $value] = explode('=', $line, 2);
+        $name = trim($name);
+        if (preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $name) && getenv($name) === false) {
+            putenv($name . '=' . trim($value));
+        }
     }
 }
 
