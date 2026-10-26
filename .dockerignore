@@ -1,0 +1,10 @@
+.git
+.env
+.env.*
+!.env.example
+vendor
+config/google-credentials.json
+logs
+cache
+uploads
+hs_err_pid*.log

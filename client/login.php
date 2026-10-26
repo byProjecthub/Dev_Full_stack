@@ -1,6 +1,10 @@
 <?php
 declare(strict_types=1);
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../includes/functions.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 if (isClient()) redirect('dashboard.php');
 
@@ -8,27 +12,40 @@ $error = '';
 $success = $_SESSION['flash_success'] ?? '';
 unset($_SESSION['flash_success']);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
-    $pass  = $_POST['password'] ?? '';
+    if (!verifyCsrf($_POST['csrf_token'] ?? '')) {
+        http_response_code(403);
+        $error = 'Invalid security token.';
+    } else {
+        $email = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
+        $pass  = $_POST['password'] ?? '';
 
-    $db = db();
-    if ($db) {
-        $stmt = $db->prepare("SELECT * FROM clients WHERE email = ? AND status = 'active'");
-        $stmt->execute([$email]);
-        $client = $stmt->fetch();
+        $db = db();
+        if ($db) {
+            $stmt = $db->prepare("SELECT * FROM clients WHERE email = ? AND status = 'active' LIMIT 1");
+            $stmt->execute([$email]);
+            $client = $stmt->fetch();
 
-        if ($client && password_verify($pass, $client['password'])) {
-            $_SESSION['client_id']    = $client['id'];
-            $_SESSION['client_name']  = $client['full_name'];
-            $_SESSION['client_email'] = $client['email'];
-            redirect('dashboard.php');
+            if ($client && password_verify($pass, $client['password'])) {
+                $stmt = $db->prepare("UPDATE clients SET last_login_at = NOW(), last_login_ip = INET6_ATON(?) WHERE id = ?");
+                $stmt->execute([$_SERVER['REMOTE_ADDR'] ?? null, $client['id']]);
+
+                session_regenerate_id(true);
+                $_SESSION['client_id']    = $client['id'];
+                $_SESSION['client_name']  = $client['full_name'];
+                $_SESSION['client_email'] = $client['email'];
+                $_SESSION['user_id']      = $client['id'];
+                $_SESSION['user_name']    = $client['full_name'];
+                $_SESSION['user_email']   = $client['email'];
+                $_SESSION['user_role']    = 'client';
+                redirect('dashboard.php');
+            }
         }
+        $error = 'Invalid email or password.';
     }
-    $error = 'Invalid email or password.';
-
-    $pageTitle = 'Sign-in';
-    require_once __DIR__ . '/../includes/header.php';
 }
+
+$pageTitle = 'Sign In';
+require_once __DIR__ . '/../includes/header.php';
 ?>
 <div class="auth-page">
   <div class="auth-card reveal">

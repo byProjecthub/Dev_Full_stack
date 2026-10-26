@@ -1,12 +1,17 @@
 <?php
 declare(strict_types=1);
-require_once 'includes/functions.php';
+require_once __DIR__ . '/includes/functions.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 $error = '';
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCsrf($_POST['csrf_token'] ?? '')) {
+        http_response_code(403);
         $error = 'Invalid security token.';
     } else {
         $name     = sanitize($_POST['full_name'] ?? '');
@@ -48,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $pageTitle = 'Create Account';
-require_once 'includes/header.php';
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <div class="auth-page">
@@ -111,4 +116,4 @@ require_once 'includes/header.php';
   </div>
 </div>
 
-<?php include 'includes/footer.php'; ?>
+<?php include __DIR__ . '/includes/footer.php'; ?>

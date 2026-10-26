@@ -28,8 +28,8 @@ function isActive($page, $current) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?php echo isset($pageTitle) ? htmlspecialchars($pageTitle) . ' | ' : ''; ?>Vueports Solutions</title>
   <meta name="description" content="<?php echo isset($pageDescription) ? htmlspecialchars($pageDescription) : 'Vueports Solutions — Custom Software, Data Engineering & AI Agents'; ?>">
-  <link rel="stylesheet" href="assets/css/variables.css?v=<?php echo time(); ?>">
-  <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
+  <link rel="stylesheet" href="/assets/css/variables.css?v=<?php echo time(); ?>">
+  <link rel="stylesheet" href="/assets/css/style.css?v=<?php echo time(); ?>">
 
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.css">
     <script src="https://cdn.jsdelivr.net/npm/cookieconsent@3/build/cookieconsent.min.js"></script>
@@ -52,7 +52,7 @@ setTimeout(() => {
 <!-- Navigation -->
 <nav class="navbar" id="navbar">
   <div class="navbar-inner">
-      <div class="logo"> <a href="index.php" class="logo">
+      <div class="logo"> <a href="/index.php" class="logo">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="200" height="50">
                         <defs>
                             <linearGradient id="vGradF" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -76,13 +76,13 @@ setTimeout(() => {
                 </a></div>
 
     <div class="navbar-links">
-      <a href="index.php" class="<?php echo isActive('index', $currentPage); ?>">Home</a>
-      <a href="about.php" class="<?php echo isActive('about', $currentPage); ?>">About</a>
-      <a href="services.php" class="<?php echo isActive('services', $currentPage); ?>">Services</a>
-      <a href="pricing.php" class="<?php echo isActive('pricing', $currentPage); ?>">Pricing</a>
-      <a href="contact.php" class="<?php echo isActive('contact', $currentPage); ?>">Contact</a>
+      <a href="/index.php" class="<?php echo isActive('index', $currentPage); ?>">Home</a>
+      <a href="/about.php" class="<?php echo isActive('about', $currentPage); ?>">About</a>
+      <a href="/services.php" class="<?php echo isActive('services', $currentPage); ?>">Services</a>
+      <a href="/pricing.php" class="<?php echo isActive('pricing', $currentPage); ?>">Pricing</a>
+      <a href="/contact.php" class="<?php echo isActive('contact', $currentPage); ?>">Contact</a>
       <?php if ($isLoggedIn): ?>
-        <a href="portal/dashboard.php" class="<?php echo isActive('dashboard', $currentPage); ?>">Portal</a>
+        <a href="/client/dashboard.php" class="<?php echo isActive('dashboard', $currentPage); ?>">Portal</a>
       <?php endif; ?>
     </div>
 
@@ -92,10 +92,10 @@ setTimeout(() => {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
           <?php echo htmlspecialchars($userName ?: 'Account'); ?>
         </span>
-        <a href="logout.php" class="btn btn-secondary" style="display:inline-flex;">Sign Out</a>
+        <a href="/client/logout.php" class="btn btn-secondary" style="display:inline-flex;">Sign Out</a>
       <?php else: ?>
-  <!-- <a href="login.php" class="btn btn-secondary" style="display:inline-flex;">Sign In</a>-->
-     <a href="consultation.php" class="btn btn-primary" style="display:inline-flex;">Get Started</a>
+  <!-- <a href="/login.php" class="btn btn-secondary" style="display:inline-flex;">Sign In</a>-->
+     <a href="/consultation.php" class="btn btn-primary" style="display:inline-flex;">Get Started</a>
       <?php endif; ?>
       <button class="navbar-toggle" onclick="toggleMobileNav()" aria-label="Menu">
         <span></span>
@@ -114,15 +114,15 @@ setTimeout(() => {
       <line x1="6" y1="6" x2="18" y2="18"></line>
     </svg>
   </button>
-  <a href="index.php" onclick="toggleMobileNav()">Home</a>
-  <a href="about.php" onclick="toggleMobileNav()">About</a>
-  <a href="services.php" onclick="toggleMobileNav()">Services</a>
-  <a href="pricing.php" onclick="toggleMobileNav()">Pricing</a>
-  <a href="contact.php" onclick="toggleMobileNav()">Contact</a>
+  <a href="/index.php" onclick="toggleMobileNav()">Home</a>
+  <a href="/about.php" onclick="toggleMobileNav()">About</a>
+  <a href="/services.php" onclick="toggleMobileNav()">Services</a>
+  <a href="/pricing.php" onclick="toggleMobileNav()">Pricing</a>
+  <a href="/contact.php" onclick="toggleMobileNav()">Contact</a>
   <?php if ($isLoggedIn): ?>
-    <a href="portal/dashboard.php" onclick="toggleMobileNav()">Portal</a>
-    <a href="logout.php" onclick="toggleMobileNav()">Sign Out</a>
+    <a href="/client/dashboard.php" onclick="toggleMobileNav()">Portal</a>
+    <a href="/client/logout.php" onclick="toggleMobileNav()">Sign Out</a>
   <?php else: ?>
- <!--   <a href="login.php" onclick="toggleMobileNav()">Sign In</a>-->
+ <!--   <a href="/login.php" onclick="toggleMobileNav()">Sign In</a>-->
   <?php endif; ?>
 </div>

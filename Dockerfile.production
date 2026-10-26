@@ -1,0 +1,40 @@
+FROM php:8.3-apache-bookworm
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git unzip libonig-dev libcurl4-openssl-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && docker-php-ext-install -j2 pdo_mysql mysqli \
+    && (php -r 'exit(extension_loaded("mbstring") ? 0 : 1);' || docker-php-ext-install -j2 mbstring) \
+    && (php -r 'exit(extension_loaded("curl") ? 0 : 1);' || docker-php-ext-install -j2 curl) \
+    && a2enmod rewrite
+
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+WORKDIR /app
+COPY composer.json composer.lock ./
+ARG COMPOSER_PREFER_INSTALL=dist
+RUN --mount=type=secret,id=cloud_ca \
+    if [ -f /run/secrets/cloud_ca ]; then export COMPOSER_CAFILE=/run/secrets/cloud_ca GIT_SSL_CAINFO=/run/secrets/cloud_ca; fi; \
+    composer install --no-dev --prefer-install="$COMPOSER_PREFER_INSTALL" --no-interaction --no-progress
+
+# Copy the application allowlist in one layer; the source mount is read-only.
+# Backups, local setup tools and credentials never enter the runtime image.
+RUN --mount=type=bind,target=/source,readonly \
+    mkdir -p /app/config /app/monitoring \
+    && for path in index.php about.php booking.php calculator.php consultation.php contact.php \
+        login.php register.php payment-cancel.php payment-sucess.php portfolio.php \
+        portfolio-detail.php pricing.php service-detail.php services.php \
+        admin api blog client legal assets css images includes \
+        config/database.php config/env.php config/mailer.php config/phpmailer-config.php \
+        monitoring/health-check.php favicon.ico robots.txt site.webmanifest sitemap.xml; \
+        do cp -R "/source/$path" "/app/$path" || exit 1; done \
+    && cp /source/deploy/apache.conf /etc/apache2/sites-available/000-default.conf \
+    && cp /source/deploy/php.ini /usr/local/etc/php/conf.d/production.ini \
+    && find /app -type d -exec chmod 755 {} + \
+    && find /app -type f -exec chmod 644 {} + \
+    && mkdir -p /app/logs /app/cache /app/uploads /app/sessions \
+    && chown -R www-data:www-data /app/logs /app/cache /app/uploads /app/sessions
+
+EXPOSE 80
+HEALTHCHECK --interval=5s --timeout=5s --start-period=15s --retries=12 \
+    CMD php -r '$h=json_decode(file_get_contents("http://127.0.0.1/monitoring/health-check.php"),true); exit(($h["status"]??"")==="healthy"?0:1);'
+CMD ["apache2-foreground"]

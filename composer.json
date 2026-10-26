@@ -1,14 +1,23 @@
 {
   "name": "vueports/vueports-solutions",
   "description": "Vueports Solutions Website",
+  "type": "project",
+  "license": "proprietary",
   "require": {
-    "php": "^8.3"
-  }
-}
-{
-  "scripts": {
-    "post-install-cmd": [
-      "docker-php-ext-install pdo_mysql"
-    ]
+    "php": "^8.3",
+    "ext-ctype": "*",
+    "ext-curl": "*",
+    "ext-fileinfo": "*",
+    "ext-filter": "*",
+    "ext-hash": "*",
+    "ext-json": "*",
+    "ext-mbstring": "*",
+    "ext-openssl": "*",
+    "ext-pdo": "*",
+    "ext-pdo_mysql": "*",
+    "phpmailer/phpmailer": "^6.10"
+  },
+  "config": {
+    "sort-packages": true
   }
 }
