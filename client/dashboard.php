@@ -74,8 +74,8 @@ $pageTitle = 'Dashboard';
                         <td><?= sanitize($p['service_type'] ?: '-') ?></td>
                         <td><span class="status-badge status-<?= $p['status'] ?>"><?= ucfirst(str_replace('_', ' ', $p['status'])) ?></span></td>
                         <td style="width:200px;">
-                            <div style="font-size:0.75rem; margin-bottom:4px;"><?= $p['progress'] ?>%</div>
-                            <div class="progress-bar"><div class="progress-fill" style="width:<?= $p['progress'] ?>%"></div></div>
+                            <div style="font-size:0.75rem; margin-bottom:4px;"><?= (int) ($p['progress_percent'] ?? 0) ?>%</div>
+                            <div class="progress-bar"><div class="progress-fill" style="width:<?= (int) ($p['progress_percent'] ?? 0) ?>%"></div></div>
                         </td>
                     </tr>
                     <?php endforeach; ?>
