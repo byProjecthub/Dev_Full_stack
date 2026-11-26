@@ -106,6 +106,14 @@ docker exec --user www-data "$app" php -r '
     file_put_contents("/var/www/html/uploads/ci-smoke.php", "<?php echo \"EXECUTED_UPLOAD\"; ?>");
     file_put_contents("/var/www/html/uploads/ci-smoke.css", "/* STATIC_UPLOAD_OK */");'
 address="$(docker port "$app" 80/tcp)"
+export VUEPORTS_ADMIN_TEST_USERNAME=ci-admin
+export VUEPORTS_ADMIN_TEST_EMAIL=ci-admin@example.invalid
+VUEPORTS_ADMIN_TEST_PASSWORD="$(python3 -c 'import secrets; print(secrets.token_urlsafe(24))')"
+export VUEPORTS_ADMIN_TEST_PASSWORD
+docker exec --env ADMIN_PASSWORD="$VUEPORTS_ADMIN_TEST_PASSWORD" "$app" php scripts/create-admin.php \
+    --username="$VUEPORTS_ADMIN_TEST_USERNAME" --email="$VUEPORTS_ADMIN_TEST_EMAIL" --name="CI Administrator"
+python3 tests/admin-login.py "http://$address"
+unset VUEPORTS_ADMIN_TEST_PASSWORD
 python3 - "http://$address" <<'PY'
 import html
 import json

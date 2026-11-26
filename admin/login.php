@@ -13,6 +13,8 @@ if (isAdmin()) {
 
 $error = '';
 $login = '';
+$identityInvalid = false;
+$passwordInvalid = false;
 $success = $_SESSION['flash_success'] ?? '';
 unset($_SESSION['flash_success']);
 
@@ -26,6 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         http_response_code(403);
         $error = 'Your session expired. Please try again.';
     } elseif ($login === '' || !is_string($password) || $password === '') {
+        $identityInvalid = $login === '';
+        $passwordInvalid = !is_string($password) || $password === '';
         $error = 'Please enter your username or email and password.';
     } else {
         try {
@@ -42,6 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $admin = $stmt->fetch();
 
             if (!$admin || !password_verify($password, $admin['password'])) {
+                $identityInvalid = true;
+                $passwordInvalid = true;
                 $error = 'Invalid username, email, or password.';
             } else {
                 $ip = $_SERVER['REMOTE_ADDR'] ?? null;
@@ -72,66 +78,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Admin Login | Vueports Solutions</title>
     <link rel="stylesheet" href="../assets/css/admin.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="stylesheet" href="../assets/css/vueports-light.css?v=20261126">
+    <link rel="stylesheet" href="../assets/css/vueports-light.css?v=20261126">
+    <link rel="stylesheet" href="../assets/css/admin-login.css?v=20261126">
+    <script src="../assets/js/admin-login.js?v=20261126" defer></script>
 </head>
 <body class="admin-login">
     <div class="auth-page">
-  <div class="auth-card reveal">
-    <div class="auth-logo">Vueports<span>.</span></div>
-    <p class="auth-subtitle">Sign in to your Admin portal</p>
-        
-       <?php if ($success): ?>
-      <div class="alert alert-success" style="margin-bottom: var(--space-6);">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="display:inline; vertical-align:text-bottom; margin-right:var(--space-2);"><polyline points="20 6 9 17 4 12"></polyline></svg>
-        <?php echo htmlspecialchars($success); ?>
-      </div>
-    <?php endif; ?>
-    <?php if ($error): ?>
-      <div class="alert alert-error" style="margin-bottom: var(--space-6);">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="display:inline; vertical-align:text-bottom; margin-right:var(--space-2);"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-        <?php echo htmlspecialchars($error); ?>
-      </div>
-    <?php endif; ?>
-        <form action="" method="POST" autocomplete="on">
-      <input type="hidden" name="csrf_token" value="<?php echo csrfToken(); ?>">
+        <main class="auth-card vp-admin-auth" aria-labelledby="adminLoginTitle">
+            <a class="auth-logo" href="../index.php" aria-label="Vueports home">Vueports<span>.</span></a>
+            <p class="vp-admin-auth__eyebrow">ADMINISTRATOR ACCESS</p>
+            <h1 id="adminLoginTitle">Sign in to your workspace</h1>
+            <p class="auth-subtitle">Use your administrator username or email address and password.</p>
 
-      <div class="form-group">
-        <label class="form-label" for="adminUsername">Username or email</label>
-        <input id="adminUsername" type="text" name="username" class="form-input" placeholder="Your username or email" autocomplete="username" required autofocus>
-      </div>
+            <?php if ($success !== ''): ?>
+                <p class="alert alert-success" role="status"><?= htmlspecialchars((string) $success, ENT_QUOTES, 'UTF-8') ?></p>
+            <?php endif; ?>
+            <?php if ($error !== ''): ?>
+                <p id="adminLoginError" class="alert alert-error" role="alert" tabindex="-1"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></p>
+            <?php endif; ?>
 
-      <div class="form-group">
-        <label class="form-label">Password</label>
-        <input type="password" name="password" class="form-input" placeholder="••••••••" autocomplete="current-password" required>
-      </div>
+            <form action="login.php" method="POST" autocomplete="on">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
+                <div class="form-group">
+                    <label for="adminUsername">Username or email address</label>
+                    <input id="adminUsername" type="text" name="username" class="form-input"
+                        value="<?= htmlspecialchars($login, ENT_QUOTES, 'UTF-8') ?>"
+                        placeholder="Enter your username or email"
+                        autocomplete="username" autocapitalize="none" spellcheck="false"
+                        aria-describedby="adminIdentityHint<?= $identityInvalid ? ' adminLoginError' : '' ?>"
+                        aria-invalid="<?= $identityInvalid ? 'true' : 'false' ?>"
+                        required <?= $error === '' ? 'autofocus' : '' ?>>
+                    <p id="adminIdentityHint" class="vp-admin-auth__hint">Use the administrator account created for this website.</p>
+                </div>
 
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-6);">
-        <label style="display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); color: var(--text-secondary); cursor: pointer;">
-          <input type="checkbox" name="remember" style="width: 16px; height: 16px;">
-          Remember me
-        </label>
-        <a href="../contact.php?subject=admin-access" style="font-size: var(--text-sm); color: var(--accent-indigo); font-weight: 500;">Need access help?</a>
-      </div>
+                <div class="form-group">
+                    <label for="adminPassword">Password</label>
+                    <div class="vp-admin-auth__password">
+                        <input id="adminPassword" type="password" name="password" class="form-input"
+                            placeholder="Enter your password" autocomplete="current-password"
+                            aria-invalid="<?= $passwordInvalid ? 'true' : 'false' ?>"
+                            <?= $passwordInvalid ? 'aria-describedby="adminLoginError"' : '' ?> required>
+                        <button id="adminPasswordToggle" class="vp-admin-auth__toggle" type="button"
+                            aria-controls="adminPassword" aria-label="Show password" aria-pressed="false" hidden>Show</button>
+                    </div>
+                </div>
 
-      <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
-        Sign In
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-      </button>
-    </form>
-       <div class="auth-divider"><span>or</span></div>
-        
-        <p style="text-align:center; margin-top:16px; font-size:0.875rem;">
-            <a href="../index.php">← Back to Website</a>
-        </p>
-           <p class="auth-footer">
-      Looking for the client portal? <a href="../login.php">Client sign-in</a>
-    </p>  
-    </div>
+                <div class="vp-admin-auth__help">
+                    <a href="../contact.php?subject=admin-access">Need access help?</a>
+                </div>
+                <button type="submit" class="btn btn-primary vp-admin-auth__submit">
+                    Sign in
+                    <svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14m-6-6 6 6-6 6"></path></svg>
+                </button>
+            </form>
 
+            <p class="auth-footer">Looking for your client account? <a href="../login.php">Client sign-in</a></p>
+            <a class="vp-admin-auth__back" href="../index.php">Back to website</a>
+        </main>
     </div>
 </body>
 </html>

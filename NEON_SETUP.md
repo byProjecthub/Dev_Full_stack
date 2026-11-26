@@ -76,6 +76,20 @@ unset admin_password
 
 Use your actual email, chosen username and a unique strong password. The command hashes the password, creates a `super_admin` and refuses to overwrite existing usernames/emails. Sign in through `/admin/login.php`. Client accounts use the normal registration pages.
 
+The first admin login field accepts either the `--username` value or the `--email`
+value used at account creation. The password is the one supplied to the creation
+command. There are no default administrator login details. Updating `ADMIN_PASSWORD`
+in an environment file later does not change an existing administrator's password.
+
+If you are using Windows Command Prompt (CMD), create the account with a hidden
+password prompt inside the Docker container. Replace the example email first:
+
+```cmd
+docker run --rm -it --env-file .env vueports:local bash -lc "read -r -s -p 'Administrator password (12+ characters): ' ADMIN_PASSWORD; printf '\n'; export ADMIN_PASSWORD; php scripts/create-admin.php --email=you@example.com --username=njabulo"
+```
+
+The old `/admin/Login1.php` address uses the same administrator form and checks.
+
 ## 5. Deploy to Vercel
 
 1. Put the application source in a private Git repository; keep `.env`, backups and runtime data out of Git.
