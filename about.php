@@ -156,48 +156,48 @@ require_once __DIR__ . '/includes/header.php';
 </section>
 
 <!-- FAQ -->
-<section class="section">
+<section id="faq" class="section">
   <div class="container">
     <div class="section-header center reveal">
       <span class="section-label">FAQ</span>
       <h2 class="section-title">Frequently Asked<br>Questions</h2>
     </div>
     <div class="faq-list">
-      <div class="faq-item reveal">
-        <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+      <details class="faq-item" name="vueports-about-faq">
+        <summary class="faq-question" id="about-faq-question-1" aria-controls="about-faq-answer-1">
           <span>What is your typical project timeline?</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </button>
-        <div class="faq-answer"><p>Most projects range from 4-16 weeks depending on complexity. MVPs typically take 4-8 weeks, while enterprise solutions may require 12-16 weeks. We provide detailed timelines during our scoping session.</p></div>
-      </div>
-      <div class="faq-item reveal">
-        <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+        </summary>
+        <div class="faq-answer" id="about-faq-answer-1" role="region" aria-labelledby="about-faq-question-1"><p>Most projects range from 4-16 weeks depending on complexity. MVPs typically take 4-8 weeks, while enterprise solutions may require 12-16 weeks. We provide detailed timelines during our scoping session.</p></div>
+      </details>
+      <details class="faq-item" name="vueports-about-faq">
+        <summary class="faq-question" id="about-faq-question-2" aria-controls="about-faq-answer-2">
           <span>Do you offer ongoing support after launch?</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </button>
-        <div class="faq-answer"><p>Yes! We offer maintenance retainers and support packages. Starter projects include 30 days of support, Professional includes 90 days, and Enterprise clients get dedicated DevOps support with monthly retainers available.</p></div>
-      </div>
-      <div class="faq-item reveal">
-        <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+        </summary>
+        <div class="faq-answer" id="about-faq-answer-2" role="region" aria-labelledby="about-faq-question-2"><p>Yes! We offer maintenance retainers and support packages. Starter projects include 30 days of support, Professional includes 90 days, and Enterprise clients get dedicated DevOps support with monthly retainers available.</p></div>
+      </details>
+      <details class="faq-item" name="vueports-about-faq">
+        <summary class="faq-question" id="about-faq-question-3" aria-controls="about-faq-answer-3">
           <span>What technologies do you specialize in?</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </button>
-        <div class="faq-answer"><p>We specialize in modern full-stack development (React, Vue, Node.js, Python), cloud infrastructure (AWS, Azure, GCP), data engineering (Spark, Kafka, Snowflake), and AI/ML (OpenAI, Claude, LangChain, custom model training).</p></div>
-      </div>
-      <div class="faq-item reveal">
-        <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+        </summary>
+        <div class="faq-answer" id="about-faq-answer-3" role="region" aria-labelledby="about-faq-question-3"><p>We specialize in modern full-stack development (React, Vue, Node.js, Python), cloud infrastructure (AWS, Azure, GCP), data engineering (Spark, Kafka, Snowflake), and AI/ML (OpenAI, Claude, LangChain, custom model training).</p></div>
+      </details>
+      <details class="faq-item" name="vueports-about-faq">
+        <summary class="faq-question" id="about-faq-question-4" aria-controls="about-faq-answer-4">
           <span>How do you handle project pricing?</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </button>
-        <div class="faq-answer"><p>We offer transparent fixed-price projects based on detailed scoping. For ongoing work, we have monthly retainer options. All pricing is in ZAR and we accept payments via PayFast, EFT, or bank transfer.</p></div>
-      </div>
-      <div class="faq-item reveal">
-        <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+        </summary>
+        <div class="faq-answer" id="about-faq-answer-4" role="region" aria-labelledby="about-faq-question-4"><p>We offer transparent fixed-price projects based on detailed scoping. For ongoing work, we have monthly retainer options. All pricing is in ZAR and we accept payments via PayFast, EFT, or bank transfer.</p></div>
+      </details>
+      <details class="faq-item" name="vueports-about-faq">
+        <summary class="faq-question" id="about-faq-question-5" aria-controls="about-faq-answer-5">
           <span>Can you work with our existing team?</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </button>
-        <div class="faq-answer"><p>Absolutely. We regularly collaborate with in-house teams, acting as an extension of your engineering department. We use agile methodologies and integrate with your existing workflows, tools, and communication channels.</p></div>
-      </div>
+        </summary>
+        <div class="faq-answer" id="about-faq-answer-5" role="region" aria-labelledby="about-faq-question-5"><p>Absolutely. We regularly collaborate with in-house teams, acting as an extension of your engineering department. We use agile methodologies and integrate with your existing workflows, tools, and communication channels.</p></div>
+      </details>
     </div>
   </div>
 </section>

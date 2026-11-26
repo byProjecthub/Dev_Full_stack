@@ -308,11 +308,11 @@ document.addEventListener('DOMContentLoaded', () => {
     /* ========================================
        FAQ Accordion
        ======================================== */
-    document.querySelectorAll('.faq-item').forEach(item => {
+    document.querySelectorAll('.faq-item:not(details)').forEach(item => {
         const question = item.querySelector('.faq-question');
         question?.addEventListener('click', () => {
             const isActive = item.classList.contains('active');
-            document.querySelectorAll('.faq-item').forEach(other => {
+            document.querySelectorAll('.faq-item:not(details)').forEach(other => {
                 if (other !== item) other.classList.remove('active');
             });
             item.classList.toggle('active', !isActive);

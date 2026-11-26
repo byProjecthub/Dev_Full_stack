@@ -24,7 +24,7 @@ $vpUrl = static fn(string $path): string => htmlspecialchars(vueports_url($path)
   <meta name="description" content="<?= htmlspecialchars($pageDescription ?? 'Vueports Solutions — Custom Software, Data Engineering & AI Agents', ENT_QUOTES, 'UTF-8') ?>">
   <link rel="icon" href="<?= $vpUrl('favicon.ico') ?>">
   <link rel="stylesheet" href="<?= $vpUrl('assets/css/variables.css') ?>">
-  <link rel="stylesheet" href="<?= $vpUrl('assets/css/style.css') ?>">
+  <link rel="stylesheet" href="<?= $vpUrl('assets/css/style.css') ?>?v=20261126-faq">
   <link rel="stylesheet" href="<?= $vpUrl('assets/css/vueports-light.css') ?>?v=20261126">
   <link rel="stylesheet" href="<?= $vpUrl('assets/css/vueports-navigation.css') ?>?v=20261126-nav">
   <script src="<?= $vpUrl('assets/js/vueports-navigation.js') ?>?v=20261126-nav" defer></script>

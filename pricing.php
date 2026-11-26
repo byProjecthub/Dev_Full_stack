@@ -119,34 +119,34 @@ require_once __DIR__ . '/includes/header.php';
       <h2 class="section-title">Common Questions</h2>
     </div>
     <div class="faq-list">
-      <div class="faq-item reveal">
-        <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+      <details class="faq-item" name="vueports-pricing-faq">
+        <summary class="faq-question" id="pricing-faq-question-1" aria-controls="pricing-faq-answer-1">
           <span>What's included in support?</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </button>
-        <div class="faq-answer"><p>Support includes bug fixes, minor updates, performance monitoring, and email support during business hours. Professional and Enterprise plans include priority response times.</p></div>
-      </div>
-      <div class="faq-item reveal">
-        <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+        </summary>
+        <div class="faq-answer" id="pricing-faq-answer-1" role="region" aria-labelledby="pricing-faq-question-1"><p>Support includes bug fixes, minor updates, performance monitoring, and email support during business hours. Professional and Enterprise plans include priority response times.</p></div>
+      </details>
+      <details class="faq-item" name="vueports-pricing-faq">
+        <summary class="faq-question" id="pricing-faq-question-2" aria-controls="pricing-faq-answer-2">
           <span>Can I upgrade my plan later?</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </button>
-        <div class="faq-answer"><p>Absolutely. Many clients start with a Starter MVP and upgrade to Professional or Enterprise as their needs grow. We'll credit your initial investment toward the upgrade.</p></div>
-      </div>
-      <div class="faq-item reveal">
-        <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+        </summary>
+        <div class="faq-answer" id="pricing-faq-answer-2" role="region" aria-labelledby="pricing-faq-question-2"><p>Absolutely. Many clients start with a Starter MVP and upgrade to Professional or Enterprise as their needs grow. We'll credit your initial investment toward the upgrade.</p></div>
+      </details>
+      <details class="faq-item" name="vueports-pricing-faq">
+        <summary class="faq-question" id="pricing-faq-question-3" aria-controls="pricing-faq-answer-3">
           <span>How does payment work?</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </button>
-        <div class="faq-answer"><p>We typically split payments into milestones: 50% upfront to begin work, 25% at the midpoint demo, and 25% upon final delivery. Enterprise retainers are billed monthly.</p></div>
-      </div>
-      <div class="faq-item reveal">
-        <button class="faq-question" onclick="this.parentElement.classList.toggle('open')">
+        </summary>
+        <div class="faq-answer" id="pricing-faq-answer-3" role="region" aria-labelledby="pricing-faq-question-3"><p>We typically split payments into milestones: 50% upfront to begin work, 25% at the midpoint demo, and 25% upon final delivery. Enterprise retainers are billed monthly.</p></div>
+      </details>
+      <details class="faq-item" name="vueports-pricing-faq">
+        <summary class="faq-question" id="pricing-faq-question-4" aria-controls="pricing-faq-answer-4">
           <span>What if I need something not listed?</span>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </button>
-        <div class="faq-answer"><p>Every project is unique. Book a free consultation and we'll create a custom proposal tailored to your specific requirements and budget.</p></div>
-      </div>
+        </summary>
+        <div class="faq-answer" id="pricing-faq-answer-4" role="region" aria-labelledby="pricing-faq-question-4"><p>Every project is unique. Book a free consultation and we'll create a custom proposal tailored to your specific requirements and budget.</p></div>
+      </details>
     </div>
   </div>
 </section>
