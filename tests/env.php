@@ -31,3 +31,4 @@ try {
     rmdir($directory . '/config');
     rmdir($directory);
 }
+

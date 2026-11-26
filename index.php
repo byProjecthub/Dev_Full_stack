@@ -13,8 +13,8 @@ if ($uri && $uri !== 'index.php' && file_exists($uri . '.php')) {
 $pageTitle = 'Home';
 $pageDescription = 'Vueports Solutions — Custom Software, Data Engineering & AI Agents. Your IT Solutions Production Partner.';
 
-require_once 'includes/functions.php';
-require_once 'includes/header.php';
+require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/header.php';
 
 // Fetch services from database
 $services = [];
@@ -41,35 +41,7 @@ $stats = [
 ?>
 
 <!-- Hero Section -->
-<section class="hero">
-  <div class="container">
-    <div class="hero-content">
-      <div class="hero-label animate-fade-in-up">
-        <span class="dot"></span>
-        Available for new projects
-      </div>
-      <h1 class="hero-title animate-fade-in-up delay-100">
-        The super fast<br>
-        software studio<br>
-        for <span class="accent">modern teams.</span>
-      </h1>
-      <p class="hero-subtitle animate-fade-in-up delay-200">
-        We build custom software, data pipelines, and AI agents that help your business move faster, think smarter, and scale effortlessly.
-      </p>
-      <div class="hero-actions animate-fade-in-up delay-300">
-        <a href="consultation.php" class="btn btn-primary btn-lg">
-          Start a Project
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-            <polyline points="12 5 19 12 12 19"></polyline>
-          </svg>
-        </a>
-        <a href="services.php" class="btn btn-secondary btn-lg">Explore Services</a>
-      </div>
-    </div>
-  </div>
-  <div class="hero-bg-text">Vueports</div>
-</section>
+<section class="vp-hero"><div class="container"><div class="vp-hero-top"><span class="vp-kicker">SOFTWARE / DATA / APPLIED AI</span><span class="vp-location">SOUTH AFRICA ↗ BUILT FOR WHAT’S NEXT</span></div><div class="vp-hero-grid"><div class="vp-hero-copy"><h1>Your business.<br>More capable.<br><span>More connected.</span></h1><p>We connect the systems, information and workflows that move your business. Custom software, data engineering and AI agents — with purpose.</p><div class="vp-hero-actions"><a href="consultation.php" class="btn btn-primary btn-lg">Build what’s next <span class="vp-cta-arrow" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg></span></a><a href="#expertise" class="vp-text-link">Explore our expertise <span aria-hidden="true">↓</span></a></div></div><div class="vp-hero-visual"><img src="images/vueports.png" alt="Vueports software studio artwork" fetchpriority="high"><div class="vp-visual-caption"><span>THE VUEPORTS WAY</span><span>IDEAS INTO WORKING SYSTEMS</span></div></div></div><div class="vp-hero-bottom"><span>YOUR IT SOLUTIONS PRODUCTION PARTNER.</span><span>STRATEGY → ENGINEERING → EVOLUTION</span></div></div></section>
 
 <!-- Logo Bar -->
 <section class="logo-bar section-sm">
@@ -83,7 +55,7 @@ $stats = [
 </section>
 
 <!-- Services Section -->
-<section class="section">
+<section class="section" id="expertise">
   <div class="container">
     <div class="section-header center reveal">
       <span class="section-label">What We Do</span>
@@ -224,7 +196,7 @@ $stats = [
 </section>
 
 <!-- Feature Cards Section -->
-<section class="section">
+<section class="section" id="approach">
   <div class="container">
     <div class="section-header center reveal">
       <span class="section-label">Our Approach</span>
@@ -380,4 +352,4 @@ const statObserver = new IntersectionObserver((entries) => {
 statItems.forEach(el => statObserver.observe(el));
 </script>
 
-<?php include 'includes/footer.php'; ?>
+<?php include __DIR__ . '/includes/footer.php'; ?>

@@ -182,6 +182,7 @@ $pageTitle = 'Consultations';
         .note-input { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-family: inherit; font-size: 13px; resize: vertical; min-height: 80px; }
         @media (max-width: 768px) { .detail-grid { grid-template-columns: 1fr; } .edit-form { grid-template-columns: 1fr; } }
     </style>
+<link rel="stylesheet" href="../assets/css/vueports-light.css?v=20261126">
 </head>
 <body class="admin-body">
     <aside class="admin-sidebar">

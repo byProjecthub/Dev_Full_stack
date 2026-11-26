@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
-require_once 'includes/functions.php';
-require_once 'includes/emails.php';
+require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/emails.php';
 
 $pid = (int) ($_GET['pid'] ?? 0);
 $payment = null;
@@ -20,7 +20,7 @@ if ($pid && db()) {
 }
 
 $pageTitle = 'Payment Successful';
-require_once 'includes/header.php';
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <section class="section" style="padding-top:140px; text-align:center;">
@@ -66,4 +66,4 @@ require_once 'includes/header.php';
     </div>
 </section>
 
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

@@ -1,73 +1,31 @@
 services:
   app:
-    user: "${DEV_UID:-1000}:${DEV_GID:-1000}"
-    build:
-      context: .
-      args:
-        - http_proxy
-        - https_proxy
-        - no_proxy
-        - HTTP_PROXY
-        - HTTPS_PROXY
-        - NO_PROXY
+    build: .
     ports:
-      - "127.0.0.1:8080:8080"
-    volumes:
-      - ./:/app
-      # Keep the image's locked dependencies when mounting the source checkout.
-      - /app/vendor
+      - "8080:80"
     environment:
-      MYSQLHOST: db
-      MYSQLPORT: "3306"
-      MYSQLDATABASE: ${MYSQLDATABASE:-vueports_database}
-      MYSQLUSER: ${MYSQLUSER:-vueports}
-      MYSQLPASSWORD: ${MYSQLPASSWORD:?Set MYSQLPASSWORD in .env}
-      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
-      APP_URL: ${APP_URL:-http://localhost:8080}
-      COMPOSER_HOME: /tmp/composer
+      APP_ENV: development
+      APP_URL: http://localhost:8080
+      SESSION_SECURE: "0"
+      SESSION_DRIVER: database
+      DATABASE_URL: postgresql://vueports:local-development-only@db:5432/vueports?sslmode=disable&channel_binding=disable
+      DATABASE_URL_UNPOOLED: postgresql://vueports:local-development-only@db:5432/vueports?sslmode=disable&channel_binding=disable
+      JWT_SECRET: local-development-key-change-before-production-57d86a
     depends_on:
       db:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "php", "-r", "$$h=json_decode(file_get_contents('http://127.0.0.1:8080/monitoring/health-check.php'), true); exit(($$h['status'] ?? '') === 'healthy' ? 0 : 1);"]
-      interval: 5s
-      timeout: 5s
-      retries: 24
-
   db:
-    build:
-      context: .
-      dockerfile: Dockerfile.mysql
-    command: ["--lower-case-table-names=1", "--skip-log-bin"]
+    image: postgres:17
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
-      MYSQL_DATABASE: ${MYSQLDATABASE:-vueports_database}
-      MYSQL_USER: ${MYSQLUSER:-vueports}
-      MYSQL_PASSWORD: ${MYSQLPASSWORD:?Set MYSQLPASSWORD in .env}
+      POSTGRES_DB: vueports
+      POSTGRES_USER: vueports
+      POSTGRES_PASSWORD: local-development-only
     volumes:
-      - db_data:/var/lib/mysql
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "MYSQL_PWD=\"$${MYSQL_ROOT_PASSWORD}\" mysql --protocol=TCP --host=127.0.0.1 --user=root --execute='SELECT 1' > /dev/null"]
+      test: ["CMD-SHELL", "pg_isready -U vueports -d vueports"]
       interval: 3s
-      timeout: 5s
-      retries: 60
-      start_period: 20s
-
-  redis:
-    image: redis:7-alpine
-    profiles: ["extras"]
-
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    profiles: ["extras"]
-    environment:
-      PMA_HOST: db
-      PMA_PORT: 3306
-    ports:
-      - "127.0.0.1:8081:80"
-    depends_on:
-      db:
-        condition: service_healthy
-
+      timeout: 3s
+      retries: 20
 volumes:
-  db_data:
+  postgres_data:

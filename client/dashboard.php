@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../includes/functions.php';
 if (!isClient()) redirect('login.php');
 
 $client = getClient($_SESSION['client_id']);
@@ -31,6 +31,8 @@ $pageTitle = 'Dashboard';
         .progress-bar { width:100%; height:8px; background:#e4e4e7; border-radius:999px; overflow:hidden; margin-top:8px; }
         .progress-fill { height:100%; background:#4f46e5; border-radius:999px; }
     </style>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../assets/css/vueports-light.css?v=20261126">
 </head>
 <body class="admin-body">
     <aside class="admin-sidebar">

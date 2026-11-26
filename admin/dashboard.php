@@ -49,7 +49,7 @@ $pendingBookings= (int) $db->query("SELECT COUNT(*) FROM bookings WHERE status =
 $totalClients   = (int) $db->query("SELECT COUNT(*) FROM clients WHERE status = 'active'")->fetchColumn();
 
 $totalRevenue   = (float) $db->query("SELECT COALESCE(SUM(amount), 0) FROM payments WHERE payment_status = 'completed'")->fetchColumn();
-$monthRevenue   = (float) $db->query("SELECT COALESCE(SUM(amount), 0) FROM payments WHERE payment_status = 'completed' AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)")->fetchColumn();
+$monthRevenue   = (float) $db->query("SELECT COALESCE(SUM(amount), 0) FROM payments WHERE payment_status = 'completed' AND created_at >= (NOW() - INTERVAL '30 day')")->fetchColumn();
 
 /* ========================================
    Analytics Data
@@ -128,7 +128,7 @@ $recentConsultations = $db->query("SELECT * FROM consultations ORDER BY created_
 $recentBookings = $db->query("SELECT * FROM bookings ORDER BY created_at DESC LIMIT 5")->fetchAll();
 $upcomingBookings = $db->query("
     SELECT * FROM bookings
-    WHERE booking_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+    WHERE booking_date BETWEEN CURRENT_DATE AND (CURRENT_DATE + INTERVAL '7 day')
     AND status IN ('pending', 'confirmed')
     ORDER BY booking_date ASC, booking_time ASC
     LIMIT 5
@@ -136,9 +136,9 @@ $upcomingBookings = $db->query("
 
 // Revenue chart data (last 6 months)
 $revenueData = $db->query("
-    SELECT DATE_FORMAT(created_at, '%Y-%m') as month, COALESCE(SUM(amount), 0) as total
+    SELECT TO_CHAR(created_at, 'YYYY-MM') as month, COALESCE(SUM(amount), 0) as total
     FROM payments
-    WHERE payment_status = 'completed' AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+    WHERE payment_status = 'completed' AND created_at >= (NOW() - INTERVAL '6 month')
     GROUP BY month
     ORDER BY month ASC
 ")->fetchAll();
@@ -241,6 +241,7 @@ $consultStatusColors = [
             .dashboard-grid, .section-row, .section-row-2 { grid-template-columns: 1fr; }
         }
     </style>
+<link rel="stylesheet" href="../assets/css/vueports-light.css?v=20261126">
 </head>
 <body class="admin-body">
     <aside class="admin-sidebar">

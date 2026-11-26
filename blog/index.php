@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-require_once '../includes/header.php';
-require_once '../includes/functions.php';
-require_once '../includes/emails.php';
+require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/emails.php';
 
 
 $page = max(1, (int) ($_GET['page'] ?? 1));
@@ -143,4 +143,4 @@ $pageTitle = 'Blog';
     </div>
 </section>
 
-<?php require_once '../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

@@ -2,8 +2,8 @@
 declare(strict_types=1);
 // api/v1/projects.php — Project REST API
 
-require_once '../../includes/functions.php';
-require_once '../../includes/jwt.php';
+require_once __DIR__ . '/../../includes/functions.php';
+require_once __DIR__ . '/../../includes/jwt.php';
 
 header('Content-Type: application/json');
 
@@ -26,7 +26,7 @@ if (!$payload) {
 }
 
 $clientId = ($payload['role'] === 'client') ? (int) $payload['sub'] : null;
-$isAdmin = $payload['role'] === 'admin';
+$isAdmin = in_array($payload['role'] ?? '', ['admin', 'super_admin'], true);
 
 // ── ROUTES ──
 switch ($method) {
@@ -67,15 +67,15 @@ switch ($method) {
         $offset = ($page - 1) * $limit;
         $status = sanitize($_GET['status'] ?? '');
         
-        $where = $isAdmin ? "WHERE 1=1" : "WHERE client_id = ?";
+        $where = $isAdmin ? "WHERE 1=1" : "WHERE p.client_id = ?";
         $params = $isAdmin ? [] : [$clientId];
         
         if ($status) {
-            $where .= " AND status = ?";
+            $where .= " AND p.status = ?";
             $params[] = $status;
         }
         
-        $countStmt = $db->prepare("SELECT COUNT(*) FROM projects $where");
+        $countStmt = $db->prepare("SELECT COUNT(*) FROM projects p $where");
         $countStmt->execute($params);
         $total = (int) $countStmt->fetchColumn();
         
@@ -117,10 +117,10 @@ switch ($method) {
             apiResponse(false, null, 'Title and client_id required', 400);
         }
         
-        $stmt = $db->prepare("INSERT INTO projects (client_id, title, description, status, budget, start_date, deadline, service_type, priority, created_at, updated_at) VALUES (?, ?, ?, 'planning', ?, NOW(), ?, ?, ?, NOW(), NOW())");
+        $stmt = $db->prepare("INSERT INTO projects (client_id, title, description, status, budget, start_date, deadline, service_type, priority, created_at, updated_at) VALUES (?, ?, ?, 'planning', ?, NOW(), ?, ?, ?, NOW(), NOW()) RETURNING id");
         $stmt->execute([$clientIdNew, $title, $description, $budget, $deadline, $serviceType, $priority]);
         
-        $projectId = (int) $db->lastInsertId();
+        $projectId = (int) $stmt->fetchColumn();
         apiResponse(true, ['id' => $projectId], 'Project created', 201);
         break;
 

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-require_once 'includes/functions.php';
+require_once __DIR__ . '/includes/functions.php';
 
 // Get and clean the slug
 $rawSlug = $_GET['slug'] ?? '';
@@ -77,7 +77,7 @@ if (empty($project)) {
 if (empty($project)) {
     $pageTitle = 'Project Not Found';
     $pageDescription = 'The requested project could not be found.';
-    require_once 'includes/header.php';
+    require_once __DIR__ . '/includes/header.php';
     ?>
     <section class="page-header" style="padding-top: 200px; padding-bottom: 120px;">
         <div class="container">
@@ -93,7 +93,7 @@ if (empty($project)) {
         </div>
     </section>
     <?php
-    require_once 'includes/footer.php';
+    require_once __DIR__ . '/includes/footer.php';
     exit;
 }
 
@@ -101,7 +101,7 @@ if (empty($project)) {
 $pageTitle = sanitize($project['title'] ?? 'Project');
 $pageDescription = sanitize($project['description'] ?? 'Portfolio project by Vueports Solutions.');
 
-require_once 'includes/header.php';
+require_once __DIR__ . '/includes/header.php';
 
 // Fetch related projects
 $related = [];
@@ -315,4 +315,4 @@ if (is_string($gallery)) $gallery = json_decode($gallery, true) ?: [];
 </section>
 <?php endif; ?>
 
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

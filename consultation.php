@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-require_once 'config/database.php';
-require_once 'includes/functions.php';
-require_once 'includes/emails.php';
+require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/emails.php';
 
 $success = '';
 $error = '';
@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $pageTitle = 'Free Consultation';
-require_once 'includes/header.php';
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <section class="page-header">
@@ -187,4 +187,4 @@ require_once 'includes/header.php';
   </div>
 </section>
 
-<?php include 'includes/footer.php'; ?>
+<?php include __DIR__ . '/includes/footer.php'; ?>

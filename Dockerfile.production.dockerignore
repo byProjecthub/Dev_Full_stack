@@ -2,22 +2,22 @@
 .github
 .env
 .env.*
+!.env.example
 **/.env
 **/.env.*
+!**/.env.example
 vendor
 config/google-credentials.json
-admin/Login1.php
+backups
 logs
 cache
-uploads
-sessions
+tests
+docs
 *.sql
+!database/*.sql
 *.pdf
+*.zip
 *.log
 itn_raw.txt
-import-db.php
-test-email.php
-process-email-queue.php
-railway.json
-tests
-scripts
+* - Copy.php
+* - Copy.sql

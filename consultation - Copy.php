@@ -1,8 +1,8 @@
 <?php
 declare(strict_types=1);
-require_once 'config/database.php'; // Include the database connection
-require_once 'includes/functions.php';
-require_once 'includes/emails.php';
+require_once __DIR__ . '/config/database.php'; // Include the database connection
+require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/emails.php';
 
 
 $success = ''; 
@@ -48,7 +48,7 @@ function verifyRecaptcha(string $token): bool {
 }
 
 $pageTitle = 'Consultation';
-require_once 'includes/header.php';
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <section class="services-hero" style="padding-top:140px;">
@@ -155,4 +155,4 @@ grecaptcha.ready(function() {
     </div>
 </section>
 
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

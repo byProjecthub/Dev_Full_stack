@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-require_once 'config/database.php';
-require_once 'includes/functions.php';
-require_once 'includes/emails.php';
+require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/emails.php';
 
 echo "<h1>Email Diagnostic</h1>";
 echo "<pre>";

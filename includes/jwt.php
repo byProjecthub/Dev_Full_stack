@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../config/env.php';
 
 function generateJWT(array $payload, int $expiryHours = 24): string {
+    if (strlen(env('JWT_SECRET')) < 32) throw new RuntimeException('Configure JWT_SECRET with at least 32 characters.');
     $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
     $payload['iat'] = time();
     $payload['exp'] = time() + ($expiryHours * 3600);
@@ -19,6 +20,7 @@ function generateJWT(array $payload, int $expiryHours = 24): string {
 }
 
 function verifyJWT(string $token): ?array {
+    if (strlen(env('JWT_SECRET')) < 32) return null;
     $parts = explode('.', $token);
     if (count($parts) !== 3) return null;
     

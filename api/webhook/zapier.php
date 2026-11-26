@@ -2,7 +2,7 @@
 declare(strict_types=1);
 // webhooks/zapier.php — Zapier / Make.com Integration
 
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../../includes/functions.php';
 
 header('Content-Type: application/json');
 
@@ -29,8 +29,8 @@ if ($method === 'POST') {
     $event = sanitize($input['event'] ?? 'generic');
     
     // Log incoming Zapier event
-    if (!is_dir('../logs')) mkdir('../logs', 0755, true);
-    file_put_contents('../logs/zapier_inbound.txt', date('c') . ' ' . json_encode($input) . PHP_EOL, FILE_APPEND | LOCK_EX);
+    // Callback logs use private writable scratch space on container hosting.
+    file_put_contents(vueports_runtime_path('logs/zapier_inbound.txt'), date('c') . ' ' . json_encode($input) . PHP_EOL, FILE_APPEND | LOCK_EX);
     
     switch ($event) {
         case 'new_lead':
@@ -42,10 +42,10 @@ if ($method === 'POST') {
             if (!$email) respond(false, null, 'Email required', 400);
             
             // Insert as consultation lead
-            $stmt = $db->prepare("INSERT INTO consultations (name, email, phone, service_interest, message, status, source, created_at) VALUES (?, ?, ?, ?, ?, 'new', ?, NOW())");
+            $stmt = $db->prepare("INSERT INTO consultations (name, email, phone, service_interest, message, status, source, created_at) VALUES (?, ?, ?, ?, ?, 'new', ?, NOW()) RETURNING id");
             $stmt->execute([$name, $email, $phone, sanitize($input['service'] ?? ''), sanitize($input['message'] ?? ''), $source]);
             
-            respond(true, ['id' => (int) $db->lastInsertId()], 'Lead captured');
+            respond(true, ['id' => (int) $stmt->fetchColumn()], 'Lead captured');
             break;
             
         case 'update_project_status':
@@ -65,10 +65,10 @@ if ($method === 'POST') {
             if (!$clientId || $amount <= 0) respond(false, null, 'client_id and amount required', 400);
             
             $invNum = 'INV-ZAP-' . date('Ymd') . '-' . random_int(1000, 9999);
-            $db->prepare("INSERT INTO invoices (client_id, invoice_number, amount, status, due_date, created_at) VALUES (?, ?, ?, 'sent', DATE_ADD(NOW(), INTERVAL 14 DAY), NOW())")
-               ->execute([$clientId, $invNum, $amount]);
+            $vpInsert = $db->prepare("INSERT INTO invoices (client_id, invoice_number, amount, status, due_date, created_at) VALUES (?, ?, ?, 'sent', (NOW() + INTERVAL '14 day'), NOW()) RETURNING id");
+            $vpInsert->execute([$clientId, $invNum, $amount]);
             
-            respond(true, ['invoice_id' => (int) $db->lastInsertId(), 'number' => $invNum], 'Invoice created', 201);
+            respond(true, ['invoice_id' => (int) $vpInsert->fetchColumn(), 'number' => $invNum], 'Invoice created', 201);
             break;
             
         default:

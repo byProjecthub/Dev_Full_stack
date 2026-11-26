@@ -3,8 +3,8 @@ declare(strict_types=1);
 $pageTitle = 'POPIA Compliance';
 $pageDescription = 'Vueports Solutions POPIA Compliance - Protection of Personal Information Act compliance practices.';
 
-require_once '../includes/functions.php';
-require_once '../includes/header.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/header.php';
 
 $contactEmail = function_exists('getSetting') ? getSetting('contact_email', 'njabulod.hlongwane@gmail.com') : 'njabulod.hlongwane@gmail.com';
 $contactPhone = function_exists('getSetting') ? getSetting('contact_phone', '+27 (68) 826-1507') : '+27 (68) 826-1507';
@@ -139,4 +139,4 @@ $contactPhone = function_exists('getSetting') ? getSetting('contact_phone', '+27
     </div>
 </section>
 
-<?php require_once '../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

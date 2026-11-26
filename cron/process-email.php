@@ -2,8 +2,8 @@
 declare(strict_types=1);
 // cron/process-emails.php — Email Queue Processor
 
-require_once '../includes/functions.php';
-require_once '../includes/mailer.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../config/phpmailer-config.php';
 
 if (php_sapi_name() !== 'cli') {
     http_response_code(403);
@@ -14,22 +14,6 @@ $db = db();
 if (!$db) exit('Database connection failed');
 
 // Ensure email_queue table exists (idempotent)
-$db->exec("CREATE TABLE IF NOT EXISTS email_queue (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    to_email VARCHAR(255) NOT NULL,
-    to_name VARCHAR(255),
-    subject VARCHAR(255) NOT NULL,
-    body_html TEXT,
-    body_text TEXT,
-    status ENUM('pending','sent','failed') DEFAULT 'pending',
-    attempts TINYINT DEFAULT 0,
-    error_message TEXT,
-    created_at DATETIME DEFAULT NOW(),
-    sent_at DATETIME NULL,
-    INDEX idx_status (status),
-    INDEX idx_created (created_at)
-) ENGINE=InnoDB");
-
 $maxAttempts = 3;
 $batchSize = 20;
 
@@ -53,6 +37,7 @@ foreach ($emails as $email) {
     
     try {
         $mail = getMailer();
+        if (!$mail) throw new RuntimeException('SMTP is not configured.');
         $mail->addAddress($email['to_email'], $email['to_name'] ?? '');
         $mail->Subject = $email['subject'];
         
@@ -78,7 +63,7 @@ foreach ($emails as $email) {
         
     } catch (Exception $e) {
         $error = $e->getMessage();
-        $db->prepare("UPDATE email_queue SET attempts = attempts + 1, error_message = ?, status = IF(attempts + 1 >= ?, 'failed', 'pending') WHERE id = ?")
+        $db->prepare("UPDATE email_queue SET attempts = attempts + 1, error_message = ?, status = CASE WHEN attempts + 1 >= ? THEN 'failed' ELSE 'pending' END WHERE id = ?")
            ->execute([$error, $maxAttempts, $id]);
         
         // Log failure
@@ -96,7 +81,7 @@ foreach ($emails as $email) {
 echo "[" . date('c') . "] Batch complete. Sent: $sent, Failed: $failed\n";
 
 // ── RETRY OLD FAILED (optional, after cooldown) ──
-$retryStmt = $db->prepare("UPDATE email_queue SET status = 'pending', attempts = 0 WHERE status = 'failed' AND attempts >= ? AND created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)");
+$retryStmt = $db->prepare("UPDATE email_queue SET status = 'pending', attempts = 0 WHERE status = 'failed' AND attempts >= ? AND created_at > (NOW() - INTERVAL '24 hour')");
 $retryStmt->execute([$maxAttempts]);
 if ($retryStmt->rowCount() > 0) {
     echo "[" . date('c') . "] Reset {$retryStmt->rowCount()} failed emails for retry.\n";

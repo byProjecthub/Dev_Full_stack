@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
-require_once 'includes/functions.php';
-require_once 'includes/emails.php';
+require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/emails.php';
 
 $success = '';
 $error = '';
@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'quote
     } else {
         $db = db();
         if ($db) {
-            $stmt = $db->prepare("INSERT INTO calculator_leads (name, email, company, service_type, answers_json, estimated_min, estimated_max) VALUES (?,?,?,?,?,?,?)");
+            $stmt = $db->prepare("INSERT INTO calculator_leads (name, email, company, service_type, answer_json, estimated_min, estimated_max) VALUES (?,?,?,?,?,?,?)");
             $stmt->execute([
                 sanitize($_POST['name'] ?? ''),
                 filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL),
@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'quote
 }
 
 $pageTitle = 'Project Calculator';
-require_once 'includes/header.php';
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <section class="services-hero" style="padding-top:140px;">
@@ -236,7 +236,7 @@ require_once 'includes/header.php';
                 <input type="hidden" name="csrf_token" value="<?= csrfToken() ?>">
                 <input type="hidden" name="action" value="quote">
                 <input type="hidden" name="service_type" id="quoteService" value="">
-                <input type="hidden" name="answers_json" id="quoteAnswers" value="">
+                <input type="hidden" name="answer_json" id="quoteAnswers" value="">
                 <input type="hidden" name="estimated_min" id="quoteMin" value="0">
                 <input type="hidden" name="estimated_max" id="quoteMax" value="0">
 
@@ -357,4 +357,4 @@ function calculateEstimate() {
 }
 </script>
 
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

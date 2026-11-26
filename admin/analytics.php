@@ -47,8 +47,7 @@ function csvExport(PDO $db, string $type, string $since, string $until): void {
             
         case 'payments':
             fputcsv($out, ['ID', 'Client ID', 'Amount', 'Method', 'Status', 'Reference', 'Created At']);
-            $stmt = $db->prepare("SELECT id, client_id, amount, payment_method, payment_status, reference, created_at 
-                                  FROM payments WHERE DATE(created_at) BETWEEN ? AND ? ORDER BY created_at DESC");
+            $stmt = $db->prepare("SELECT id, client_id, amount, gateway AS payment_method, payment_status, gateway_transaction_id AS reference, created_at FROM payments WHERE DATE(created_at) BETWEEN ? AND ? ORDER BY created_at DESC");
             $stmt->execute([$since, $until]);
             while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) fputcsv($out, $row);
             break;
@@ -266,6 +265,8 @@ $pageTitle = 'Analytics';
         .funnel-value { width:60px; text-align:right; font-weight:700; font-size:14px; flex-shrink:0; }
         .funnel-pct { width:50px; text-align:right; font-size:12px; color:var(--text-muted); flex-shrink:0; }
     </style>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../assets/css/vueports-light.css?v=20261126">
 </head>
 <body class="admin-body">
 <aside class="admin-sidebar">

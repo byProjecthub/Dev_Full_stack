@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-require_once 'config/database.php';
-require_once 'includes/functions.php';
-require_once 'includes/emails.php';
-require_once 'config/phpmailer-config.php';
+require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/emails.php';
+require_once __DIR__ . '/config/phpmailer-config.php';
 
 // Security: simple secret key via query string or env var
 $secret = $_GET['key'] ?? '';

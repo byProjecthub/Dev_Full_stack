@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 if (isAdmin()) redirect('dashboard.php');
 
@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $db = db();
     if ($db) {
-        $stmt = $db->prepare("SELECT * FROM admin WHERE email = ? AND role ='super_admin'");
+        $stmt = $db->prepare("SELECT * FROM admins WHERE email = ? AND role ='super_admin'");
         $stmt->execute([$email]);
         $admin = $stmt->fetch();
 
@@ -32,6 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Client Login | Vueports Solutions</title>
     <link rel="stylesheet" href="../assets/css/admin.css">
     
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../assets/css/vueports-light.css?v=20261126">
 </head>
 <body class="admin-login">
     <div class="login-box" style="max-width:420px;">

@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 $slug = sanitize($_GET['slug'] ?? '');
 if (!$slug) redirect('index.php');
@@ -17,7 +17,7 @@ if ($db) {
 if (!$post) {
     http_response_code(404);
     $pageTitle = 'Not Found';
-    require_once '../includes/header.php';
+    require_once __DIR__ . '/../includes/header.php';
     ?>
     <section class="section" style="padding-top:140px; text-align:center;">
         <div class="container">
@@ -27,7 +27,7 @@ if (!$post) {
         </div>
     </section>
     <?php
-    require_once '../includes/footer.php';
+    require_once __DIR__ . '/../includes/footer.php';
     exit;
 }
 
@@ -42,7 +42,7 @@ $related = $stmt->fetchAll();
 
 $pageTitle = $post['title'];
 $metaDesc = $post['meta_description'] ?: substr(strip_tags($post['excerpt']), 0, 160);
-require_once '../includes/header.php';
+require_once __DIR__ . '/../includes/header.php';
 ?>
 
 <article class="section" style="padding-top:140px;">
@@ -123,4 +123,4 @@ require_once '../includes/header.php';
 </section>
 <?php endif; ?>
 
-<?php require_once '../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

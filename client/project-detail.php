@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 if (!isClient()) redirect('login.php');
 
@@ -71,7 +71,7 @@ $statusColors = [
 $sc = $statusColors[strtolower($project['status'])] ?? $statusColors['planning'];
 
 $pageTitle = 'Project: ' . $project['title'];
-require_once '../includes/header.php';
+require_once __DIR__ . '/../includes/header.php';
 ?>
 
 <section class="section" style="padding-top:140px;">
@@ -321,4 +321,4 @@ require_once '../includes/header.php';
     </div>
 </section>
 
-<?php require_once '../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

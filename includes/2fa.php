@@ -45,6 +45,6 @@ function disable2FA(int $userId): bool {
     $db = db();
     if (!$db) return false;
     
-    $stmt = $db->prepare("UPDATE admin SET totp_secret = NULL WHERE id = ?");
+    $stmt = $db->prepare("UPDATE admins SET totp_secret = NULL WHERE id = ?");
     return $stmt->execute([$userId]);
 }

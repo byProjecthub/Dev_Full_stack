@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $terms = sanitize($_POST['terms'] ?? '');
         
         if ($clientId && $amount > 0) {
-            $count = (int) $db->query("SELECT COUNT(*) FROM invoices WHERE YEAR(created_at) = YEAR(NOW())")->fetchColumn();
+            $count = (int) $db->query("SELECT COUNT(*) FROM invoices WHERE EXTRACT(YEAR FROM created_at) = EXTRACT(YEAR FROM NOW())")->fetchColumn();
             $invoiceNum = 'INV-' . date('Y') . '-' . str_pad((string)($count + 1), 4, '0', STR_PAD_LEFT);
             
             $stmt = $db->prepare("INSERT INTO invoices (client_id, project_id, invoice_number, amount, tax_amount, description, status, due_date, notes, terms, sent_at, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,NOW(),NOW(),NOW())");
@@ -142,6 +142,7 @@ $pageTitle = 'Invoices';
         .summary-card h4 { font-size: 22px; font-weight: 700; margin: 0; color: var(--text-primary); }
         .summary-card p { font-size: 12px; color: var(--text-muted); margin: 4px 0 0; }
     </style>
+<link rel="stylesheet" href="../assets/css/vueports-light.css?v=20261126">
 </head>
 <body class="admin-body">
     <aside class="admin-sidebar">

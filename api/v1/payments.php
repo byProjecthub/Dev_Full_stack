@@ -2,9 +2,9 @@
 declare(strict_types=1);
 // api/v1/payments.php — Payment REST API
 
-require_once '../../includes/functions.php';
-require_once '../../includes/jwt.php';
-require_once '../../includes/payfast.php';
+require_once __DIR__ . '/../../includes/functions.php';
+require_once __DIR__ . '/../../includes/jwt.php';
+require_once __DIR__ . '/../../includes/payfast.php';
 
 header('Content-Type: application/json');
 
@@ -27,7 +27,7 @@ if (!$payload) {
 }
 
 $clientId = ($payload['role'] === 'client') ? (int) $payload['sub'] : null;
-$isAdmin = $payload['role'] === 'admin';
+$isAdmin = in_array($payload['role'] ?? '', ['admin', 'super_admin'], true);
 
 switch ($method) {
     case 'GET':
@@ -108,10 +108,10 @@ switch ($method) {
                 apiResponse(false, null, 'Amount, name, and email required', 400);
             }
             
-            $db->prepare("INSERT INTO payments (client_id, invoice_id, plan_name, amount, currency, payment_status, payer_email, payer_name, created_at) VALUES (?, ?, ?, ?, 'ZAR', 'pending', ?, ?, NOW())")
-               ->execute([$clientId, $invoiceId, $planName, $amount, $payerEmail, $payerName]);
+            $vpInsert = $db->prepare("INSERT INTO payments (client_id, invoice_id, plan_name, amount, currency, payment_status, payer_email, payer_name, created_at) VALUES (?, ?, ?, ?, 'ZAR', 'pending', ?, ?, NOW()) RETURNING id");
+            $vpInsert->execute([$clientId, $invoiceId, $planName, $amount, $payerEmail, $payerName]);
             
-            $paymentId = (int) $db->lastInsertId();
+            $paymentId = (int) $vpInsert->fetchColumn();
             $pfConfig = getPayFastConfig();
             $baseUrl = 'https://' . $_SERVER['HTTP_HOST'];
             
@@ -120,7 +120,7 @@ switch ($method) {
                 'merchant_key'  => $pfConfig['merchant_key'],
                 'return_url'    => $baseUrl . '/payment-success.php?pid=' . $paymentId,
                 'cancel_url'    => $baseUrl . '/payment-cancel.php?pid=' . $paymentId,
-                'notify_url'    => $baseUrl . '/webhooks/payfast-itn.php',
+                'notify_url'    => $baseUrl . '/itn.php',
                 'name_first'    => explode(' ', $payerName)[0] ?? $payerName,
                 'name_last'     => implode(' ', array_slice(explode(' ', $payerName), 1)) ?: '',
                 'email_address' => $payerEmail,

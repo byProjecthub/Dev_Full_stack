@@ -2,12 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__ . '/includes/functions.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-if (isClient()) {
-    redirect('client/dashboard.php');
-}
+if (isClient()) redirect('client/dashboard.php');
 
 $error = '';
 $success = $_SESSION['flash_success'] ?? '';
@@ -34,9 +29,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($user['status'] !== 'active') {
                         $error = 'Your account is not active. Please contact support.';
                     } else {
-                        $stmt = $db->prepare("UPDATE clients SET last_login_at = NOW(), last_login_ip = INET6_ATON(?) WHERE id = ?");
-                        $stmt->execute([$_SERVER['REMOTE_ADDR'] ?? null, $user['id']]);
-
                         session_regenerate_id(true);
                         $_SESSION['client_id'] = $user['id'];
                         $_SESSION['client_name'] = $user['full_name'];
@@ -45,6 +37,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $_SESSION['user_name'] = $user['full_name'];
                         $_SESSION['user_email'] = $user['email'];
                         $_SESSION['user_role'] = 'client';
+
+                        $stmt = $db->prepare("UPDATE clients SET last_login_at = NOW(), last_login_ip = ? WHERE id = ?");
+                        $stmt->execute([$_SERVER['REMOTE_ADDR'] ?? null, $user['id']]);
 
                         header('Location: client/dashboard.php');
                         exit;
@@ -99,7 +94,7 @@ require_once __DIR__ . '/includes/header.php';
           <input type="checkbox" name="remember" style="width: 16px; height: 16px;">
           Remember me
         </label>
-        <a href="forgot-password.php" style="font-size: var(--text-sm); color: var(--accent-indigo); font-weight: 500;">Forgot password?</a>
+        <a href="contact.php?subject=account-access" style="font-size: var(--text-sm); color: var(--accent-indigo); font-weight: 500;">Need access help?</a>
       </div>
 
       <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">

@@ -1,7 +1,7 @@
 <?php
 $pageTitle = 'Pricing';
-require_once 'includes/functions.php';
-require_once 'includes/header.php';
+require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <section class="page-header">
@@ -112,7 +112,7 @@ require_once 'includes/header.php';
 </section>
 
 <!-- FAQ -->
-<section class="section" style="background: var(--bg-surface);">
+<section id="faq" class="section" style="background: var(--bg-surface);">
   <div class="container">
     <div class="section-header center reveal">
       <span class="section-label">FAQ</span>
@@ -151,4 +151,4 @@ require_once 'includes/header.php';
   </div>
 </section>
 
-<?php include 'includes/footer.php'; ?>
+<?php include __DIR__ . '/includes/footer.php'; ?>

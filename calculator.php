@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
-require_once 'includes/functions.php';
-require_once 'includes/emails.php';
+require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/emails.php';
 
 $success = '';
 $error = '';
@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'quote
 }
 
 $pageTitle = 'Project Calculator';
-require_once 'includes/header.php';
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <section class="page-header">
@@ -70,7 +70,7 @@ require_once 'includes/header.php';
       <?php endif; ?>
 
       <!-- Service Tabs -->
-      <div style="display: flex; gap: var(--space-3); margin-bottom: var(--space-8); flex-wrap: wrap;">
+      <div class="vp-calculator-tabs" style="display: flex; gap: var(--space-3); margin-bottom: var(--space-8); flex-wrap: wrap;">
         <button type="button" class="btn btn-primary" id="tab-software" onclick="switchService('software')">Custom Software</button>
         <button type="button" class="btn btn-secondary" id="tab-data" onclick="switchService('data')">Data Engineering</button>
         <button type="button" class="btn btn-secondary" id="tab-ai" onclick="switchService('ai')">AI Agents</button>
@@ -627,28 +627,28 @@ require_once 'includes/header.php';
         <div class="calculator-section">
           <h3 style="font-size: var(--text-lg); margin-bottom: var(--space-4);">Project Type</h3>
           <div class="calculator-options">
-            <label class="calculator-option selected" data-target="sw-type" data-value="1">
+            <label class="calculator-option selected" data-target="mob-type" data-value="1">
               <div class="option-info">
                 <div class="option-radio"><div></div></div>
                 <span class="option-name">Native App</span>
               </div>
               <span class="option-price">Web Based</span>
             </label>
-            <label class="calculator-option" data-target="sw-type" data-value="2">
+            <label class="calculator-option" data-target="mob-type" data-value="2">
               <div class="option-info">
                 <div class="option-radio"><div></div></div>
                 <span class="option-name">Hybrid</span>
               </div>
               <span class="option-price">+40%</span>
             </label>
-            <label class="calculator-option" data-target="sw-type" data-value="3">
+            <label class="calculator-option" data-target="mob-type" data-value="3">
               <div class="option-info">
                 <div class="option-radio"><div></div></div>
                 <span class="option-name">Cross-Platform</span>
               </div>
               <span class="option-price">+60%</span>
             </label>
-            <label class="calculator-option" data-target="sw-type" data-value="3">
+            <label class="calculator-option" data-target="mob-type" data-value="3">
               <div class="option-info">
                 <div class="option-radio"><div></div></div>
                 <span class="option-name">Progressive </span>
@@ -656,7 +656,7 @@ require_once 'includes/header.php';
               <span class="option-price">+80%</span>
             </label>
           </div>
-          <select id="sw-type" style="display:none;">
+          <select id="mob-type" style="display:none;">
             <option value="1">Native</option>
             <option value="2" selected>Web Based</option>
             <option value="3">Hybrid</option>
@@ -668,28 +668,28 @@ require_once 'includes/header.php';
         <div class="calculator-section">
           <h3 style="font-size: var(--text-lg); margin-bottom: var(--space-4);">Pages / Screens</h3>
           <div class="calculator-options">
-            <label class="calculator-option" data-target="sw-pages" data-value="3">
+            <label class="calculator-option" data-target="mob-pages" data-value="3">
               <div class="option-info">
                 <div class="option-radio"><div></div></div>
                 <span class="option-name">Under 5</span>
               </div>
               <span class="option-price">Base</span>
             </label>
-            <label class="calculator-option selected" data-target="sw-pages" data-value="7">
+            <label class="calculator-option selected" data-target="mob-pages" data-value="7">
               <div class="option-info">
                 <div class="option-radio"><div></div></div>
                 <span class="option-name">5 – 10</span>
               </div>
               <span class="option-price">+R6,000</span>
             </label>
-            <label class="calculator-option" data-target="sw-pages" data-value="15">
+            <label class="calculator-option" data-target="mob-pages" data-value="15">
               <div class="option-info">
                 <div class="option-radio"><div></div></div>
                 <span class="option-name">10 – 20</span>
               </div>
               <span class="option-price">+R18,000</span>
             </label>
-            <label class="calculator-option" data-target="sw-pages" data-value="30">
+            <label class="calculator-option" data-target="mob-pages" data-value="30">
               <div class="option-info">
                 <div class="option-radio"><div></div></div>
                 <span class="option-name">20+</span>
@@ -697,7 +697,7 @@ require_once 'includes/header.php';
               <span class="option-price">+R40,500</span>
             </label>
           </div>
-          <select id="sw-pages" style="display:none;">
+          <select id="mob-pages" style="display:none;">
             <option value="3">Under 5</option>
             <option value="7" selected>5 – 10</option>
             <option value="15">10 – 20</option>
@@ -708,28 +708,28 @@ require_once 'includes/header.php';
         <div class="calculator-section">
           <h3 style="font-size: var(--text-lg); margin-bottom: var(--space-4);">Third-party Integrations</h3>
           <div class="calculator-options">
-            <label class="calculator-option selected" data-target="sw-integrations" data-value="0">
+            <label class="calculator-option selected" data-target="mob-integrations" data-value="0">
               <div class="option-info">
                 <div class="option-radio"><div></div></div>
                 <span class="option-name">None</span>
               </div>
               <span class="option-price">Base</span>
             </label>
-            <label class="calculator-option" data-target="sw-integrations" data-value="8000">
+            <label class="calculator-option" data-target="mob-integrations" data-value="8000">
               <div class="option-info">
                 <div class="option-radio"><div></div></div>
                 <span class="option-name">1 – 2 APIs</span>
               </div>
               <span class="option-price">+R8,000</span>
             </label>
-            <label class="calculator-option" data-target="sw-integrations" data-value="18000">
+            <label class="calculator-option" data-target="mob-integrations" data-value="18000">
               <div class="option-info">
                 <div class="option-radio"><div></div></div>
                 <span class="option-name">3 – 5 APIs</span>
               </div>
               <span class="option-price">+R18,000</span>
             </label>
-            <label class="calculator-option" data-target="sw-integrations" data-value="30000">
+            <label class="calculator-option" data-target="mob-integrations" data-value="30000">
               <div class="option-info">
                 <div class="option-radio"><div></div></div>
                 <span class="option-name">5+ APIs / Enterprise</span>
@@ -737,7 +737,7 @@ require_once 'includes/header.php';
               <span class="option-price">+R30,000</span>
             </label>
           </div>
-          <select id="sw-integrations" style="display:none;">
+          <select id="mob-integrations" style="display:none;">
             <option value="0" selected>None</option>
             <option value="8000">1 – 2 APIs</option>
             <option value="18000">3 – 5 APIs</option>
@@ -748,21 +748,21 @@ require_once 'includes/header.php';
         <div class="calculator-section">
           <h3 style="font-size: var(--text-lg); margin-bottom: var(--space-4);">Design Requirement</h3>
           <div class="calculator-options">
-            <label class="calculator-option" data-target="sw-design" data-value="0">
+            <label class="calculator-option" data-target="mob-design" data-value="0">
               <div class="option-info">
                 <div class="option-radio"><div></div></div>
                 <span class="option-name">Template-based</span>
               </div>
               <span class="option-price">Base</span>
             </label>
-            <label class="calculator-option selected" data-target="sw-design" data-value="10000">
+            <label class="calculator-option selected" data-target="mob-design" data-value="10000">
               <div class="option-info">
                 <div class="option-radio"><div></div></div>
                 <span class="option-name">Custom UI Design</span>
               </div>
               <span class="option-price">+R10,000</span>
             </label>
-            <label class="calculator-option" data-target="sw-design" data-value="20000">
+            <label class="calculator-option" data-target="mob-design" data-value="20000">
               <div class="option-info">
                 <div class="option-radio"><div></div></div>
                 <span class="option-name">Premium UX Research + Design</span>
@@ -770,7 +770,7 @@ require_once 'includes/header.php';
               <span class="option-price">+R20,000</span>
             </label>
           </div>
-          <select id="sw-design" style="display:none;">
+          <select id="mob-design" style="display:none;">
             <option value="0">Template-based</option>
             <option value="10000" selected>Custom UI Design</option>
             <option value="20000">Premium UX Research + Design</option>
@@ -780,21 +780,21 @@ require_once 'includes/header.php';
         <div class="calculator-section">
           <h3 style="font-size: var(--text-lg); margin-bottom: var(--space-4);">Timeline Urgency</h3>
           <div class="calculator-options">
-            <label class="calculator-option selected" data-target="sw-timeline" data-value="0">
+            <label class="calculator-option selected" data-target="mob-timeline" data-value="0">
               <div class="option-info">
                 <div class="option-radio"><div></div></div>
                 <span class="option-name">Standard (8+ weeks)</span>
               </div>
               <span class="option-price">Base</span>
             </label>
-            <label class="calculator-option" data-target="sw-timeline" data-value="15000">
+            <label class="calculator-option" data-target="mob-timeline" data-value="15000">
               <div class="option-info">
                 <div class="option-radio"><div></div></div>
                 <span class="option-name">Fast (4–6 weeks)</span>
               </div>
               <span class="option-price">+R15,000</span>
             </label>
-            <label class="calculator-option" data-target="sw-timeline" data-value="25000">
+            <label class="calculator-option" data-target="mob-timeline" data-value="25000">
               <div class="option-info">
                 <div class="option-radio"><div></div></div>
                 <span class="option-name">Rush (&lt; 4 weeks)</span>
@@ -802,7 +802,7 @@ require_once 'includes/header.php';
               <span class="option-price">+R25,000</span>
             </label>
           </div>
-          <select id="sw-timeline" style="display:none;">
+          <select id="mob-timeline" style="display:none;">
             <option value="0" selected>Standard (8+ weeks)</option>
             <option value="15000">Fast (4–6 weeks)</option>
             <option value="25000">Rush (&lt; 4 weeks)</option>
@@ -910,11 +910,11 @@ const services = {
         base: 20000,
         pageRate: 1500,
         calculate() {
-             const typeMult = parseFloat(document.getElementById('sw-type').value);
-            const pages = parseInt(document.getElementById('sw-pages').value);
-            const integrations = parseInt(document.getElementById('sw-integrations').value);
-            const design = parseInt(document.getElementById('sw-design').value);
-            const timeline = parseInt(document.getElementById('sw-timeline').value);
+             const typeMult = parseFloat(document.getElementById('mob-type').value);
+            const pages = parseInt(document.getElementById('mob-pages').value);
+            const integrations = parseInt(document.getElementById('mob-integrations').value);
+            const design = parseInt(document.getElementById('mob-design').value);
+            const timeline = parseInt(document.getElementById('mob-timeline').value);
             const subtotal = this.base + (pages * this.pageRate * typeMult) + integrations + design + timeline;
             return { min: subtotal * 0.9, max: subtotal * 1.15, breakdown: [
                 `Base project: R${this.base.toLocaleString()}`,
@@ -1024,6 +1024,9 @@ function showQuoteForm() {
     document.getElementById('quoteForm').style.display = 'block';
     document.getElementById('quoteForm').scrollIntoView({ behavior: 'smooth' });
 }
+
+// Show only the selected service and keep its controls isolated.
+switchService(currentService);
 </script>
 
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

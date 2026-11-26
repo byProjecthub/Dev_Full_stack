@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../includes/functions.php';
 if (!isClient()) redirect('login.php');
 
 $client = getClient($_SESSION['client_id']);
@@ -15,6 +15,8 @@ $pageTitle = 'Invoices';
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../assets/css/admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../assets/css/vueports-light.css?v=20261126">
 </head>
 <body class="admin-body">
 <aside class="admin-sidebar">
@@ -56,7 +58,7 @@ $pageTitle = 'Invoices';
                         <td><?= $inv['due_date'] ? date('M j, Y', strtotime($inv['due_date'])) : '-' ?></td>
                         <td>
                             <?php if ($inv['status'] !== 'paid'): ?>
-                                <a href="../pay.php?invoice_id=<?= $inv['id'] ?>" class="btn btn-sm btn-primary">Pay Now</a>
+                                <a href="pay.php?invoice_id=<?= $inv['id'] ?>" class="btn btn-sm btn-primary">Pay Now</a>
                             <?php else: ?>
                                 <span style="font-size:0.875rem; color:var(--admin-muted);">Paid <?= $inv['paid_at'] ? date('M j, Y', strtotime($inv['paid_at'])) : '' ?></span>
                             <?php endif; ?>

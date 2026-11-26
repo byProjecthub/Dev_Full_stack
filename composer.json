@@ -1,10 +1,9 @@
 {
   "name": "vueports/vueports-solutions",
-  "description": "Vueports Solutions Website",
+  "description": "Vueports Solutions PHP application for Neon PostgreSQL",
   "type": "project",
   "license": "proprietary",
   "require": {
-    "php": "^8.3",
     "ext-ctype": "*",
     "ext-curl": "*",
     "ext-fileinfo": "*",
@@ -14,10 +13,15 @@
     "ext-mbstring": "*",
     "ext-openssl": "*",
     "ext-pdo": "*",
-    "ext-pdo_mysql": "*",
+    "ext-pdo_pgsql": "*",
+    "php": "^8.3",
     "phpmailer/phpmailer": "^6.10"
   },
   "config": {
     "sort-packages": true
+  },
+  "scripts": {
+    "db:migrate": "php scripts/migrate.php",
+    "db:check": "php scripts/check-database.php"
   }
 }

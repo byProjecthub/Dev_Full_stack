@@ -156,6 +156,7 @@ $pageTitle = 'Messages';
         .reply-box textarea { width: 100%; min-height: 100px; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; font-family: inherit; font-size: 14px; resize: vertical; }
         .reply-box textarea:focus { outline: none; border-color: var(--color-primary); }
     </style>
+<link rel="stylesheet" href="../assets/css/vueports-light.css?v=20261126">
 </head>
 <body class="admin-body">
     <aside class="admin-sidebar">

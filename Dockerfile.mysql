@@ -1,2 +1,0 @@
-FROM mysql:8.0
-COPY --chmod=644 database.sql /docker-entrypoint-initdb.d/10-schema.sql

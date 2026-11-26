@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
+  <defs>
+    <linearGradient id="vGradDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#818cf8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#a78bfa;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accentGradDark" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#f472b6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fb7185;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(20, 20)">
+    <path d="M 60 10 L 110 130 L 130 130 L 70 0 L 50 0 L 0 130 L 20 130 Z" fill="url(#vGradDark)"/>
+    <path d="M 70 35 L 95 95 L 105 95 L 75 20 Z" fill="url(#accentGradDark)" opacity="0.95"/>
+    <circle cx="115" cy="145" r="8" fill="url(#accentGradDark)"/>
+  </g>
+
+  <text x="170" y="95" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-size="72" font-weight="800" fill="#f8fafc" letter-spacing="-2">Vueports</text>
+  <text x="172" y="130" font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif" font-size="22" font-weight="500" fill="#94a3b8" letter-spacing="4">SOLUTIONS</text>
+</svg>

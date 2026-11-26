@@ -2,7 +2,7 @@
 # Validate already-built publication images against a disposable database.
 set -euo pipefail
 : "${APP_IMAGE:?Set APP_IMAGE to the built application image}"
-: "${DB_IMAGE:?Set DB_IMAGE to the built MySQL image}"
+: "${DB_IMAGE:?Set DB_IMAGE to the PostgreSQL test image}"
 cd "$(dirname "$0")/.."
 umask 077
 state_dir="$(mktemp -d)"
@@ -33,15 +33,15 @@ import sys
 directory = Path(sys.argv[1])
 password = secrets.token_hex(32)
 database = {
-    'MYSQL_ROOT_PASSWORD': secrets.token_hex(32),
-    'MYSQL_DATABASE': 'vueports_database',
-    'MYSQL_USER': 'vueports',
-    'MYSQL_PASSWORD': password,
+    'POSTGRES_DB': 'vueports',
+    'POSTGRES_USER': 'vueports',
+    'POSTGRES_PASSWORD': password,
 }
 application = {
-    'MYSQLHOST': 'db', 'MYSQLPORT': '3306',
-    'MYSQLDATABASE': 'vueports_database', 'MYSQLUSER': 'vueports',
-    'MYSQLPASSWORD': password, 'JWT_SECRET': secrets.token_hex(32),
+    'APP_ENV': 'test', 'SESSION_DRIVER': 'database',
+    'DATABASE_URL': f'postgresql://vueports:{password}@db:5432/vueports?sslmode=disable&channel_binding=disable',
+    'DATABASE_URL_UNPOOLED': f'postgresql://vueports:{password}@db:5432/vueports?sslmode=disable&channel_binding=disable',
+    'JWT_SECRET': secrets.token_hex(32),
     'APP_URL': 'http://127.0.0.1', 'SESSION_SECURE': '0',
 }
 for name, values in [('database.env', database), ('application.env', application)]:
@@ -52,10 +52,10 @@ docker network create "$project" > /dev/null
 docker volume create "$volume" > /dev/null
 docker run -d --name "$database" --network "$project" --network-alias db \
     --env-file "$state_dir/database.env" \
-    --mount "type=volume,source=$volume,target=/var/lib/mysql" \
-    --health-cmd 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql --protocol=TCP --host=127.0.0.1 --user=root --execute="SELECT 1" > /dev/null' \
+    --mount "type=volume,source=$volume,target=/var/lib/postgresql/data" \
+    --health-cmd 'pg_isready -U vueports -d vueports' \
     --health-interval 3s --health-timeout 5s --health-retries 60 \
-    "$DB_IMAGE" --lower-case-table-names=1 --skip-log-bin > /dev/null
+    "$DB_IMAGE" > /dev/null
 
 wait_healthy() {
     local container="$1" deadline=$((SECONDS + 240)) status
@@ -75,16 +75,18 @@ wait_healthy "$database"
 docker run -d --name "$app" --network "$project" \
     --env-file "$state_dir/application.env" \
     --publish 127.0.0.1::80 "$APP_IMAGE" > /dev/null
+docker exec "$app" php scripts/migrate.php
 wait_healthy "$app"
 
 # Tests are injected into this disposable container, not the published image.
-docker cp tests "$app:/app/tests"
-docker exec "$app" sh -c 'chmod 755 /app/tests; chmod 644 /app/tests/*.php'
+docker cp tests "$app:/var/www/html/tests"
+docker exec "$app" sh -c 'chmod 755 /var/www/html/tests; chmod 644 /var/www/html/tests/*.php'
 docker exec --user www-data --env COMPOSER_HOME=/tmp/composer "$app" composer validate --strict
 docker exec --user www-data "$app" composer check-platform-reqs
 docker exec --user www-data "$app" php tests/env.php
 docker exec --user www-data "$app" php tests/portfolio.php
-docker exec "$app" sh -c 'test ! -e /app/database.sql && test ! -e /app/import-db.php && test ! -e /app/config/google-credentials.json'
+docker exec --user www-data "$app" php tests/neon-smoke.php
+docker exec "$app" sh -c 'test ! -e /var/www/html/.env && test ! -e /var/www/html/database.sql && test ! -e /var/www/html/config/google-credentials.json && test -e /var/www/html/database/001_neon_postgresql.sql'
 docker run --rm --network none \
     --mount "type=bind,source=$PWD,target=/source,readonly" --workdir /source \
     "$APP_IMAGE" php -r '
@@ -101,8 +103,8 @@ docker run --rm --network none \
 
 # Verify writes as the actual Apache worker and deny uploaded executable files.
 docker exec --user www-data "$app" php -r '
-    file_put_contents("/app/uploads/ci-smoke.php", "<?php echo \"EXECUTED_UPLOAD\"; ?>");
-    file_put_contents("/app/uploads/ci-smoke.txt", "STATIC_UPLOAD_OK");'
+    file_put_contents("/var/www/html/uploads/ci-smoke.php", "<?php echo \"EXECUTED_UPLOAD\"; ?>");
+    file_put_contents("/var/www/html/uploads/ci-smoke.txt", "STATIC_UPLOAD_OK");'
 address="$(docker port "$app" 80/tcp)"
 python3 - "http://$address" <<'PY'
 import html
@@ -141,7 +143,7 @@ for path in ['/', '/services.php']:
         if title not in body:
             raise RuntimeError(f'{path}: seeded service content missing')
 health = json.loads(request('/monitoring/health-check.php')[0])
-if health['status'] != 'healthy' or health['checks']['write_permissions']['status'] != 'ok':
+if health['status'] != 'healthy' or health['database'] != 'postgresql':
     raise RuntimeError('Database/extensions/Apache write-permission health failed')
 css, mime = request('/assets/css/variables.css')
 if 'text/css' not in mime or ':root' not in css:
@@ -177,7 +179,7 @@ for path in ['/.env', '/.git/config', '/database.sql', '/database%20-%20Copy.sql
              '/config/database.php', '/includes/functions.php', '/vendor/autoload.php',
              '/tests/env.php', '/import-db.php', '/test-email.php',
              '/process-email-queue.php', '/Dockerfile', '/uploads/ci-smoke.php',
-             '/sessions/', '/logs/', '/cache/']:
+             '/scripts/migrate.php', '/database/001_neon_postgresql.sql', '/logs/', '/cache/']:
     try:
         client.open(base + path, timeout=10)
     except urllib.error.HTTPError as error:
@@ -191,3 +193,4 @@ if request('/uploads/ci-smoke.txt')[0] != 'STATIC_UPLOAD_OK':
 print('PASS production HTTP pages, health, login forms, CSS, API registration/login/token refresh, private paths and upload execution protection')
 PY
 printf 'All publication-image checks passed.\n'
+

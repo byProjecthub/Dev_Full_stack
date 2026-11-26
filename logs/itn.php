@@ -1,14 +1,14 @@
 <?php
 declare(strict_types=1);
-require_once 'includes/functions.php';
-require_once 'includes/payfast.php';
-require_once 'includes/emails.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/payfast.php';
+require_once __DIR__ . '/../includes/emails.php';
 
 header('HTTP/1.0 200 OK');
 
 // Log raw ITN for debugging
-if (!is_dir('logs')) mkdir('logs', 0755, true);
-file_put_contents('logs/itn_raw.txt', date('c') . ' ' . json_encode($_POST) . "\n", FILE_APPEND);
+// Callback logs use private writable scratch space on container hosting.
+file_put_contents(vueports_runtime_path('logs/itn_raw.txt'), date('c') . ' ' . json_encode($_POST) . "\n", FILE_APPEND);
 
 if (empty($_POST)) {
     http_response_code(400);

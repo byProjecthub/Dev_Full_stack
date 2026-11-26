@@ -3,10 +3,6 @@ declare(strict_types=1);
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/emails.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
 if (isClient()) redirect('dashboard.php');
 
 $error = ''; 
@@ -19,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !verifyCsrf($_POST['csrf_token'] ??
     $name    = sanitize($_POST['full_name'] ?? '');
     $email   = filter_var(trim($_POST['email'] ?? ''), FILTER_SANITIZE_EMAIL);
     $phone   = sanitize($_POST['phone'] ?? '');
-    $company = sanitize($_POST['company_name'] ?? '');
+    $company = sanitize($_POST['company_name'] ?? $_POST['company'] ?? '');
     $pass    = $_POST['password'] ?? '';
     $confirm = $_POST['confirm_password'] ?? '';
 
@@ -40,10 +36,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !verifyCsrf($_POST['csrf_token'] ??
                 $error = 'An account with this email already exists.';
             } else {
                 $hash = password_hash($pass, PASSWORD_DEFAULT);
-                $stmt = $db->prepare("INSERT INTO clients (full_name, email, phone, company_name, password) VALUES (?,?,?,?,?)");
+                $stmt = $db->prepare("INSERT INTO clients (full_name, email, phone, company_name, password) VALUES (?,?,?,?,?) RETURNING id");
                 $stmt->execute([$name, $email, $phone, $company, $hash]);
 
-                $clientId = (int) $db->lastInsertId();
+                $clientId = (int) $stmt->fetchColumn();
                 sendWelcomeEmail(['id'=>$clientId, 'full_name'=>$name, 'email'=>$email]);
                 $success = 'Account created! Please log in below.';
             }
@@ -58,6 +54,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !verifyCsrf($_POST['csrf_token'] ??
     <title>Client Registration | Vueports Solutions</title>
     <link rel="stylesheet" href="../assets/css/admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../assets/css/vueports-light.css?v=20261126">
 </head>
 <body class="admin-login">
     <div class="login-box" style="max-width:480px;">
@@ -65,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !verifyCsrf($_POST['csrf_token'] ??
         <?php if ($error): ?><div class="alert alert-error"><?= $error ?></div><?php endif; ?>
         <?php if ($success): ?><div class="alert" style="background:#dcfce7; color:#166534; border:1px solid #22c55e;"><?= $success ?></div><?php endif; ?>
         <form method="POST">
-            <input type="hidden" name="csrf_token" value="<?php echo csrfToken(); ?>">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(csrfToken(), ENT_QUOTES, 'UTF-8') ?>">
             <div class="form-group"><label>Full Name *</label><input type="text" name="full_name" required></div>
             <div class="form-group"><label>Email *</label><input type="email" name="email" required></div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">

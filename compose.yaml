@@ -1,0 +1,31 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8080:80"
+    environment:
+      APP_ENV: development
+      APP_URL: http://localhost:8080
+      SESSION_SECURE: "0"
+      SESSION_DRIVER: database
+      DATABASE_URL: postgresql://vueports:local-development-only@db:5432/vueports?sslmode=disable&channel_binding=disable
+      DATABASE_URL_UNPOOLED: postgresql://vueports:local-development-only@db:5432/vueports?sslmode=disable&channel_binding=disable
+      JWT_SECRET: local-development-key-change-before-production-57d86a
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: vueports
+      POSTGRES_USER: vueports
+      POSTGRES_PASSWORD: local-development-only
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vueports -d vueports"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+volumes:
+  postgres_data:

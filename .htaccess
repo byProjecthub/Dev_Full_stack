@@ -1,4 +1,11 @@
+Options -Indexes
 RewriteEngine On
+RewriteRule (^|/)\. - [F,L]
+RewriteRule ^(?:config|includes|vendor|database|scripts|cron|conf\.d|sessions|logs|cache|backups|websocket|deploy|tests|docs)(?:/|$) - [F,L,NC]
+RewriteRule ^(?:import-db|test-email|process-email-queue)\.php$ - [F,L,NC]
+<FilesMatch "(?i)(^\.|\.(sql|env|ini|log|dump|bak|zip|md|ya?ml)$|^(?!robots\.txt$).*\.txt$|^vercel\.json$|^composer\.(json|lock)$|^Dockerfile)">
+    Require all denied
+</FilesMatch>
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.php [QSA,L]

@@ -3,8 +3,8 @@ declare(strict_types=1);
 $pageTitle = 'Privacy Policy';
 $pageDescription = 'Vueports Solutions Privacy Policy - POPIA compliant data protection practices.';
 
-require_once '../includes/functions.php';
-require_once '../includes/header.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/header.php';
 
 $lastUpdated = function_exists('getSetting') ? getSetting('privacy_last_updated', '2024-01-01') : '2024-01-01';
 $companyName = function_exists('getSetting') ? getSetting('site_name', 'Vueports Solutions') : 'Vueports Solutions';
@@ -124,4 +124,4 @@ $contactEmail = function_exists('getSetting') ? getSetting('contact_email', 'nja
     </div>
 </section>
 
-<?php require_once '../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-require_once 'includes/functions.php';
+require_once __DIR__ . '/includes/functions.php';
 
 $pageTitle = 'Portfolio';
 $pageDescription = 'View our featured projects and case studies.';
 
-require_once 'includes/header.php';
+require_once __DIR__ . '/includes/header.php';
 
 // Fetch all active portfolio items
 $projects = [];
@@ -68,4 +68,4 @@ if (empty($projects)) {
     </div>
 </section>
 
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

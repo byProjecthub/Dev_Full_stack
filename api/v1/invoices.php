@@ -2,8 +2,8 @@
 declare(strict_types=1);
 // api/v1/invoices.php — Invoice REST API
 
-require_once '../../includes/functions.php';
-require_once '../../includes/jwt.php';
+require_once __DIR__ . '/../../includes/functions.php';
+require_once __DIR__ . '/../../includes/jwt.php';
 
 header('Content-Type: application/json');
 
@@ -26,7 +26,7 @@ if (!$payload) {
 }
 
 $clientId = ($payload['role'] === 'client') ? (int) $payload['sub'] : null;
-$isAdmin = $payload['role'] === 'admin';
+$isAdmin = in_array($payload['role'] ?? '', ['admin', 'super_admin'], true);
 
 switch ($method) {
     case 'GET':
@@ -120,18 +120,18 @@ switch ($method) {
             apiResponse(false, null, 'client_id and valid amount required', 400);
         }
         
-        $invoiceNumber = 'INV-' . date('Y') . '-' . str_pad((string) ($db->query("SELECT COUNT(*) FROM invoices WHERE YEAR(created_at) = YEAR(NOW())")->fetchColumn() + 1), 4, '0', STR_PAD_LEFT);
+        $invoiceNumber = 'INV-' . date('Y') . '-' . str_pad((string) ($db->query("SELECT COUNT(*) FROM invoices WHERE EXTRACT(YEAR FROM created_at) = EXTRACT(YEAR FROM NOW())")->fetchColumn() + 1), 4, '0', STR_PAD_LEFT);
         
         $db->beginTransaction();
         
         try {
-            $stmt = $db->prepare("INSERT INTO invoices (client_id, project_id, invoice_number, amount, status, due_date, notes, created_at) VALUES (?, ?, ?, ?, 'sent', ?, ?, NOW())");
+            $stmt = $db->prepare("INSERT INTO invoices (client_id, project_id, invoice_number, amount, status, due_date, notes, created_at) VALUES (?, ?, ?, ?, 'sent', ?, ?, NOW()) RETURNING id");
             $stmt->execute([$clientIdNew, $projectId, $invoiceNumber, $amount, $dueDate, $notes]);
-            $invoiceId = (int) $db->lastInsertId();
+            $invoiceId = (int) $stmt->fetchColumn();
             
             // Insert line items
             if (!empty($items)) {
-                $itemStmt = $db->prepare("INSERT INTO invoice_items (invoice_id, description, quantity, unit_price, total) VALUES (?, ?, ?, ?, ?)");
+                $itemStmt = $db->prepare("INSERT INTO invoice_items (invoice_id, description, quantity, unit_price) VALUES (?, ?, ?, ?)");
                 foreach ($items as $item) {
                     $qty = (int) ($item['quantity'] ?? 1);
                     $price = (float) ($item['unit_price'] ?? 0);
@@ -139,8 +139,7 @@ switch ($method) {
                         $invoiceId,
                         sanitize($item['description'] ?? ''),
                         $qty,
-                        $price,
-                        $qty * $price
+                        $price
                     ]);
                 }
             }

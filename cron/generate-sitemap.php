@@ -2,7 +2,7 @@
 declare(strict_types=1);
 // cron/generate-sitemap.php — Dynamic Sitemap Generator
 
-require_once '../includes/functions.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 if (php_sapi_name() !== 'cli' && !isset($_GET['key'])) {
     http_response_code(403);

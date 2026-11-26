@@ -1,13 +1,13 @@
 <?php
 $pageTitle = 'Services';
-require_once 'includes/functions.php';
+require_once __DIR__ . '/includes/functions.php';
 
 $services = [];
 if (function_exists('getAllServices')) {
     $services = getAllServices('active');
 }
 
-require_once 'includes/header.php';
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <section class="page-header">
@@ -27,11 +27,17 @@ require_once 'includes/header.php';
       <?php if (!empty($services)): ?>
         <?php
         $accentMap = ['accent-cyan','accent-blue','accent-indigo','accent-violet','accent-pink','accent-amber','accent-rose','accent-emerald'];
+        $vpUsedServiceAnchors = [];
         foreach ($services as $i => $svc):
           $accent = $accentMap[$i % count($accentMap)];
           $features = json_decode($svc['features'] ?? '[]', true);
+          $vpServiceKey = strtolower(($svc['slug'] ?? '') . ' ' . ($svc['title'] ?? ''));
+          $vpServiceAnchor = str_contains($vpServiceKey, 'software') ? 'software' : (str_contains($vpServiceKey, 'data') ? 'data' : (preg_match('/\bai\b|ai-agent|artificial|automation/', $vpServiceKey) ? 'ai' : null));
+          if ($vpServiceAnchor && isset($vpUsedServiceAnchors[$vpServiceAnchor])) $vpServiceAnchor = null;
+          if ($vpServiceAnchor) $vpUsedServiceAnchors[$vpServiceAnchor] = true;
         ?>
         <div class="service-card <?php echo $accent; ?> reveal" id="<?php echo htmlspecialchars($svc['slug'] ?? ''); ?>">
+          <?php if ($vpServiceAnchor && $vpServiceAnchor !== ($svc['slug'] ?? '')): ?><span class="vp-service-anchor" id="<?= $vpServiceAnchor ?>" aria-hidden="true"></span><?php endif; ?>
           <div class="service-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
           </div>
@@ -131,4 +137,4 @@ require_once 'includes/header.php';
   </div>
 </section>
 
-<?php include 'includes/footer.php'; ?>
+<?php include __DIR__ . '/includes/footer.php'; ?>

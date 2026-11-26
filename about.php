@@ -3,21 +3,12 @@ declare(strict_types=1);
 $pageTitle = 'About';
 $pageDescription = 'About Vueports Solutions — Engineering Revenue, Not Just Code.';
 
-require_once 'includes/functions.php';
-require_once 'includes/header.php';
+require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <!-- Page Header -->
-<section class="page-header">
-  <div class="page-header-bg">About</div>
-  <div class="container">
-    <div class="page-header-content">
-      <span class="section-label">About Us</span>
-      <h1 class="page-header-title">Technology partners<br>for modern teams.</h1>
-      <p class="page-header-desc">We combine deep technical expertise with business acumen to deliver software that drives real results.</p>
-    </div>
-  </div>
-</section>
+<section class="vp-about-intro"><div class="container"><div class="vp-about-grid"><div><span class="vp-kicker">04 / ABOUT VUEPORTS</span><h1>Engineered here.<br>Thinking ahead.</h1></div><div><p class="vp-about-description">Vueports Solutions is a South African technology partner focused on custom software, data engineering and AI agents. We bring these disciplines together to help businesses create more connected digital operations.</p><div class="vp-about-tags"><span>BUSINESS CONTEXT</span><span>THOUGHTFUL ENGINEERING</span><span>LONG-TERM OWNERSHIP</span></div></div></div></div></section>
 
 <!-- Mission -->
 <section class="section" style="padding-top: 0;">
@@ -30,7 +21,7 @@ require_once 'includes/header.php';
           We believe great software is invisible — it just works. Our mission is to build systems so intuitive and reliable that you forget the technology exists and focus on what matters: your business.
         </p>
         <p class="body-base">
-          Founded in 20260, Vueports has grown from a designing and developing for small business's to a full-service develpoment for mid business's, Our software studio serves clients across South Africa. Every project we take on is an opportunity to push boundaries and deliver something exceptional.
+          Vueports Solutions designs and develops software for small and mid-sized businesses across South Africa. Every project we take on is an opportunity to push boundaries and deliver something exceptional.
         </p>
       </div>
       <div class="about-visual reveal">
@@ -211,4 +202,4 @@ require_once 'includes/header.php';
   </div>
 </section>
 
-<?php include 'includes/footer.php'; ?>
+<?php include __DIR__ . '/includes/footer.php'; ?>

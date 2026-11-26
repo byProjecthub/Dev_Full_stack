@@ -69,8 +69,8 @@ $payments = $stmt->fetchAll();
 
 // Revenue stats
 $totalRevenue = (float) $db->query("SELECT COALESCE(SUM(amount), 0) FROM payments WHERE payment_status = 'completed'")->fetchColumn();
-$thisMonth = (float) $db->query("SELECT COALESCE(SUM(amount), 0) FROM payments WHERE payment_status = 'completed' AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)")->fetchColumn();
-$thisWeek = (float) $db->query("SELECT COALESCE(SUM(amount), 0) FROM payments WHERE payment_status = 'completed' AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)")->fetchColumn();
+$thisMonth = (float) $db->query("SELECT COALESCE(SUM(amount), 0) FROM payments WHERE payment_status = 'completed' AND created_at >= (NOW() - INTERVAL '30 day')")->fetchColumn();
+$thisWeek = (float) $db->query("SELECT COALESCE(SUM(amount), 0) FROM payments WHERE payment_status = 'completed' AND created_at >= (NOW() - INTERVAL '7 day')")->fetchColumn();
 $pendingRevenue = (float) $db->query("SELECT COALESCE(SUM(amount), 0) FROM payments WHERE payment_status = 'pending'")->fetchColumn();
 
 // Status counts
@@ -107,6 +107,7 @@ $pageTitle = 'Payments';
         .revenue-card h4 { font-size: 22px; font-weight: 700; margin: 0; color: var(--text-primary); }
         .revenue-card p { font-size: 12px; color: var(--text-muted); margin: 4px 0 0; }
     </style>
+<link rel="stylesheet" href="../assets/css/vueports-light.css?v=20261126">
 </head>
 <body class="admin-body">
     <aside class="admin-sidebar">

@@ -32,10 +32,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $description = sanitize($_POST['description'] ?? '');
         
         if ($clientId && $amount > 0) {
-            $count = (int) $db->query("SELECT COUNT(*) FROM invoices WHERE YEAR(created_at) = YEAR(NOW())")->fetchColumn();
+            $count = (int) $db->query("SELECT COUNT(*) FROM invoices WHERE EXTRACT(YEAR FROM created_at) = EXTRACT(YEAR FROM NOW())")->fetchColumn();
             $invoiceNum = 'INV-' . date('Y') . '-' . str_pad((string)($count + 1), 4, '0', STR_PAD_LEFT);
             
-            $stmt = $db->prepare("INSERT INTO invoices (client_id, invoice_number, amount, description, status, due_date, created_at, updated_at) VALUES (?,?,?,?,?,DATE_ADD(NOW(), INTERVAL 14 DAY),NOW(),NOW())");
+            $stmt = $db->prepare("INSERT INTO invoices (client_id, invoice_number, amount, description, status, due_date, created_at, updated_at) VALUES (?,?,?,?,?,(NOW() + INTERVAL '14 day'),NOW(),NOW())");
             $stmt->execute([$clientId, $invoiceNum, $amount, $description, 'sent']);
             $success = "Invoice {$invoiceNum} created";
         } else {
@@ -92,6 +92,7 @@ $pageTitle = 'Clients';
         .admin-search input { padding: 8px 12px 8px 32px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary); font-size: 13px; width: 240px; }
         .admin-search i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 12px; }
     </style>
+<link rel="stylesheet" href="../assets/css/vueports-light.css?v=20261126">
 </head>
 <body class="admin-body">
     <aside class="admin-sidebar">

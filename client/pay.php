@@ -1,7 +1,8 @@
 <?php
 declare(strict_types=1);
-require_once '../includes/functions.php';
-require_once '../includes/payfast.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/payfast.php';
+require_once __DIR__ . '/../includes/frontend.php';
 
 $plan      = $_GET['plan'] ?? '';
 $invoiceId = isset($_GET['invoice_id']) ? (int)$_GET['invoice_id'] : 0;
@@ -25,9 +26,9 @@ if ($invoice) {
 } elseif (isset($plans[$plan])) {
     $itemName = $plans[$plan]['name'];
     $amount   = $plans[$plan]['amount'];
-    if ($amount === 0.00) redirect('contact.php?plan=enterprise');
+    if ($amount === 0.00) redirect('../contact.php?plan=enterprise');
 } else {
-    redirect('services.php');
+    redirect('../services.php');
 }
 
 // Pre-fill if client is logged in
@@ -46,15 +47,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $db = db();
     $clientId = $client['id'] ?? null;
-    $stmt = $db->prepare("INSERT INTO payments (client_id, invoice_id, plan_name, amount, currency, payment_status, payer_email, payer_name) VALUES (?,?,?,?,?,?,?,?)");
+    $stmt = $db->prepare("INSERT INTO payments (client_id, invoice_id, plan_name, amount, currency, payment_status, payer_email, payer_name) VALUES (?,?,?,?,?,?,?,?) RETURNING id");
     $stmt->execute([
         $clientId, $invoiceId ?: null, $plan ?: null, $amount, 'ZAR', 'pending',
         $email, "$firstName $lastName"
     ]);
-    $paymentId = (int) $db->lastInsertId();
+    $paymentId = (int) $stmt->fetchColumn();
 
     $pfConfig = getPayFastConfig();
-    $baseUrl  = 'https://' . $_SERVER['HTTP_HOST'];
+    $baseUrl  = 'https://' . $_SERVER['HTTP_HOST'] . rtrim(vueports_url(''), '/');
 
     $payFastData = [
         'merchant_id'   => $pfConfig['merchant_id'],
@@ -87,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $pageTitle = 'Checkout';
-require_once 'includes/header.php';
+require_once __DIR__ . '/../includes/header.php';
 
 $nameParts = explode(' ', trim($client['full_name'] ?? ''));
 $firstName = $nameParts[0] ?? '';
@@ -143,4 +144,4 @@ $lastName  = implode(' ', array_slice($nameParts, 1));
     </div>
 </section>
 
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once __DIR__ . '/../includes/footer.php'; ?>

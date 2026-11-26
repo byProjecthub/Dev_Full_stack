@@ -16,24 +16,7 @@ function sendSecurityHeaders(): void {
 
 // Rate limiting (file-based)
 function checkRateLimit(string $key, int $maxAttempts = 5, int $decayMinutes = 1): bool {
-    $dir = __DIR__ . '/../cache/ratelimit';
-    if (!is_dir($dir)) mkdir($dir, 0755, true);
-    
-    $file = $dir . '/' . md5($key) . '.json';
-    $now = time();
-    $data = ['attempts' => 0, 'reset_at' => $now + ($decayMinutes * 60)];
-    
-    if (file_exists($file)) {
-        $data = json_decode(file_get_contents($file), true);
-        if ($data['reset_at'] < $now) {
-            $data = ['attempts' => 0, 'reset_at' => $now + ($decayMinutes * 60)];
-        }
-    }
-    
-    $data['attempts']++;
-    file_put_contents($file, json_encode($data));
-    
-    return $data['attempts'] <= $maxAttempts;
+    return vueportsRateLimit('security:' . $key, $maxAttempts, $decayMinutes * 60);
 }
 
 // Input sanitization
@@ -128,7 +111,7 @@ function checkBruteForce(string $identifier, int $maxAttempts = 10, int $lockout
     
     $stmt = $db->prepare("
         SELECT COUNT(*) FROM login_attempts 
-        WHERE identifier = ? AND attempted_at > DATE_SUB(NOW(), INTERVAL ? MINUTE)
+        WHERE identifier = ? AND attempted_at > (NOW() - CAST(? AS INTEGER) * INTERVAL '1 minute')
     ");
     $stmt->execute([$identifier, $lockoutMinutes]);
     $attempts = (int) $stmt->fetchColumn();

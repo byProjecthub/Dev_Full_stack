@@ -76,10 +76,10 @@ switch ($method) {
                 }
                 
                 $hash = password_hash($password, PASSWORD_BCRYPT);
-                $stmt = $db->prepare("INSERT INTO clients (full_name, email, password, company_name, phone, status, created_at) VALUES (?, ?, ?, ?, ?, 'active', NOW())");
+                $stmt = $db->prepare("INSERT INTO clients (full_name, email, password, company_name, phone, status, created_at) VALUES (?, ?, ?, ?, ?, 'active', NOW()) RETURNING id");
                 $stmt->execute([$name, $email, $hash, $company, $phone]);
                 
-                $clientId = (int) $db->lastInsertId();
+                $clientId = (int) $stmt->fetchColumn();
                 $token = generateJWT(['sub' => $clientId, 'role' => 'client', 'email' => $email]);
                 
                 apiResponse(true, [

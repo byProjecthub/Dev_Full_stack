@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $client = $stmt->fetch();
 
             if ($client && password_verify($pass, $client['password'])) {
-                $stmt = $db->prepare("UPDATE clients SET last_login_at = NOW(), last_login_ip = INET6_ATON(?) WHERE id = ?");
+                $stmt = $db->prepare("UPDATE clients SET last_login_at = NOW(), last_login_ip = ? WHERE id = ?");
                 $stmt->execute([$_SERVER['REMOTE_ADDR'] ?? null, $client['id']]);
 
                 session_regenerate_id(true);
@@ -83,7 +83,7 @@ require_once __DIR__ . '/../includes/header.php';
           <input type="checkbox" name="remember" style="width: 16px; height: 16px;">
           Remember me
         </label>
-        <a href="forgot-password.php" style="font-size: var(--text-sm); color: var(--accent-indigo); font-weight: 500;">Forgot password?</a>
+        <a href="../contact.php?subject=account-access" style="font-size: var(--text-sm); color: var(--accent-indigo); font-weight: 500;">Need access help?</a>
       </div>
 
       <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">

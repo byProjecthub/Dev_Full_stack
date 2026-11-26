@@ -807,8 +807,8 @@ function recordUnsubscribe(string $email, string $source = 'email'): bool {
     if (!$db) return false;
     
     try {
-        $stmt = $db->prepare("INSERT INTO unsubscribes (email, source, created_at) VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE source = ?, created_at = NOW()");
-        $stmt->execute([$email, $source, $source]);
+        $stmt = $db->prepare("INSERT INTO unsubscribes (email, source, created_at) VALUES (?, ?, NOW()) ON CONFLICT (email) DO UPDATE SET source = EXCLUDED.source, created_at = NOW()");
+        $stmt->execute([$email, $source]);
         
         $db->prepare("UPDATE clients SET marketing_consent = 0, marketing_consent_at = NULL WHERE email = ?")->execute([$email]);
         

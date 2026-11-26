@@ -2,8 +2,8 @@
 declare(strict_types=1);
 // cron/subscription-renewal.php — Recurring Billing & Subscription Manager
 
-require_once '../includes/functions.php';
-require_once '../includes/emails.php';
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/emails.php';
 
 if (php_sapi_name() !== 'cli') {
     http_response_code(403);
@@ -13,24 +13,7 @@ if (php_sapi_name() !== 'cli') {
 $db = db();
 if (!$db) exit('Database connection failed');
 
-// Ensure subscriptions table exists
-$db->exec("CREATE TABLE IF NOT EXISTS subscriptions (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    client_id INT NOT NULL,
-    plan_name VARCHAR(100) NOT NULL,
-    amount DECIMAL(12,2) NOT NULL,
-    billing_cycle ENUM('monthly','quarterly','yearly') DEFAULT 'monthly',
-    status ENUM('active','paused','cancelled','expired') DEFAULT 'active',
-    start_date DATE NOT NULL,
-    next_billing_date DATE NOT NULL,
-    last_billed_date DATE NULL,
-    end_date DATE NULL,
-    payment_method VARCHAR(50),
-    created_at DATETIME DEFAULT NOW(),
-    updated_at DATETIME DEFAULT NOW(),
-    INDEX idx_next_bill (next_billing_date, status),
-    INDEX idx_client (client_id)
-) ENGINE=InnoDB");
+// Tables are installed by scripts/migrate.php.
 
 echo "[" . date('c') . "] Starting subscription renewal check...\n";
 
@@ -39,7 +22,7 @@ $stmt = $db->prepare("SELECT s.*, c.full_name, c.email
                        FROM subscriptions s 
                        JOIN clients c ON s.client_id = c.id 
                        WHERE s.status = 'active' 
-                       AND s.next_billing_date <= CURDATE() + INTERVAL 3 DAY
+                       AND s.next_billing_date <= CURRENT_DATE + INTERVAL '3 day'
                        ORDER BY s.next_billing_date ASC");
 $stmt->execute();
 $subscriptions = $stmt->fetchAll();
@@ -54,16 +37,16 @@ foreach ($subscriptions as $sub) {
     if ($daysUntil <= 0) {
         // Generate invoice
         $invNum = 'SUB-' . date('Ym') . '-' . str_pad((string) $sub['id'], 4, '0', STR_PAD_LEFT);
-        $db->prepare("INSERT INTO invoices (client_id, invoice_number, amount, status, due_date, notes, created_at) 
-                      VALUES (?, ?, ?, 'sent', DATE_ADD(CURDATE(), INTERVAL 7 DAY), ?, NOW())")
-           ->execute([
+        $vpInsert = $db->prepare("INSERT INTO invoices (client_id, invoice_number, amount, status, due_date, notes, created_at) 
+                      VALUES (?, ?, ?, 'sent', (CURRENT_DATE + INTERVAL '7 day'), ?, NOW()) RETURNING id");
+            $vpInsert->execute([
                $sub['client_id'],
                $invNum,
                $sub['amount'],
                "Subscription renewal: {$sub['plan_name']} (" . ucfirst($sub['billing_cycle']) . ")"
            ]);
         
-        $invoiceId = (int) $db->lastInsertId();
+        $invoiceId = (int) $vpInsert->fetchColumn();
         
         // Update subscription
         $nextBill = match($sub['billing_cycle']) {
@@ -73,7 +56,7 @@ foreach ($subscriptions as $sub) {
             default => date('Y-m-d', strtotime('+1 month')),
         };
         
-        $db->prepare("UPDATE subscriptions SET last_billed_date = CURDATE(), next_billing_date = ?, updated_at = NOW() WHERE id = ?")
+        $db->prepare("UPDATE subscriptions SET last_billed_date = CURRENT_DATE, next_billing_date = ?, updated_at = NOW() WHERE id = ?")
            ->execute([$nextBill, $sub['id']]);
         
         // Queue renewal email
@@ -109,7 +92,7 @@ foreach ($subscriptions as $sub) {
 }
 
 // ── EXPIRE ENDED SUBSCRIPTIONS ──
-$expired = $db->exec("UPDATE subscriptions SET status = 'expired', updated_at = NOW() WHERE status = 'active' AND end_date IS NOT NULL AND end_date < CURDATE()");
+$expired = $db->exec("UPDATE subscriptions SET status = 'expired', updated_at = NOW() WHERE status = 'active' AND end_date IS NOT NULL AND end_date < CURRENT_DATE");
 if ($expired > 0) {
     echo "[" . date('c') . "] Expired $expired subscriptions\n";
 }

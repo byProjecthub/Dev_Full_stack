@@ -2,21 +2,21 @@
 declare(strict_types=1);
 // webhooks/payfast-itn.php — PayFast Instant Transaction Notification (canonical)
 
-require_once '../includes/functions.php';
-require_once '../includes/payfast.php';
-require_once '../includes/emails.php';
+require_once __DIR__ . '/../../includes/functions.php';
+require_once __DIR__ . '/../../includes/payfast.php';
+require_once __DIR__ . '/../../includes/emails.php';
 
 // PayFast requires exactly 200 OK for successful acceptance
 header('HTTP/1.0 200 OK');
 
 // Ensure logs directory exists
-if (!is_dir('../logs')) mkdir('../logs', 0755, true);
+// Callback logs use private writable scratch space on container hosting.
 
 // ── RAW LOG ──
 $rawInput = file_get_contents('php://input');
 $rawPost = $_POST;
 $logLine = date('c') . ' | IP: ' . ($_SERVER['REMOTE_ADDR'] ?? 'CLI') . ' | ' . json_encode($rawPost) . PHP_EOL;
-file_put_contents('../logs/itn_raw.txt', $logLine, FILE_APPEND | LOCK_EX);
+file_put_contents(vueports_runtime_path('logs/itn_raw.txt'), $logLine, FILE_APPEND | LOCK_EX);
 
 if (empty($_POST)) {
     error_log('PayFast ITN: Empty POST body');

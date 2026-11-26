@@ -2,8 +2,7 @@
 // includes/functions.php — COMPLETE FIX
 declare(strict_types=1);
 
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../config/env.php';
+require_once __DIR__ . '/../config/bootstrap.php';
 
 /**
  * Core utility functions for Vueports Solutions
@@ -105,6 +104,8 @@ function jsonResponse(bool $success, $data = null, string $message = '', int $co
    ======================================== */
 
 function getSetting(string $key, string $default = ''): string {
+    $override = getenv(strtoupper($key));
+    if ($override !== false && $override !== '') return $override;
     static $cache = [];
     if (isset($cache[$key])) return $cache[$key];
     
@@ -131,8 +132,8 @@ function setSetting(string $key, string $value): bool {
     try {
         $stmt = $db->prepare("INSERT INTO settings (setting_key, setting_value, updated_at) 
                               VALUES (?, ?, NOW()) 
-                              ON DUPLICATE KEY UPDATE setting_value = ?, updated_at = NOW()");
-        $stmt->execute([$key, $value, $value]);
+                              ON CONFLICT (setting_key) DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = NOW()");
+        $stmt->execute([$key, $value]);
         return true;
     } catch (PDOException $e) {
         error_log("setSetting error: " . $e->getMessage());
@@ -243,10 +244,6 @@ function getBlogPostBySlug(string $slug): ?array {
     return $row ?: null;
 }
 
-/* ========================================
-   Portfolio Helpers
-   ======================================== */
-
 /** Normalize database JSON fields and preserve the view's existing field names. */
 function formatPortfolioItem(array $item): array {
     $imagePath = static function (string $path): string {
@@ -258,15 +255,16 @@ function formatPortfolioItem(array $item): array {
 
     $item['image'] = $imagePath($item['image'] ?? '');
     $item['gallery'] = array_map($imagePath, safeJsonDecode($item['gallery'] ?? null));
-    $item['technologies'] = safeJsonDecode($item['technologies'] ?? null);
+    $item['technologies'] = safeJsonDecode($item['technologies'] ?? null) ?: safeJsonDecode($item['tech_stack'] ?? null);
+    $item['results'] = safeJsonDecode($item['results'] ?? null);
     $item['tech_stack'] = $item['technologies'];
-    $item['live_url'] = $item['project_url'] ?? null;
+    $item['live_url'] = $item['project_url'] ?: ($item['live_url'] ?? null);
     return $item;
 }
 
 function getPortfolioItems(int $limit = 6, string $status = 'active'): array {
     $db = db();
-    if (!$db || $limit <= 0 || !in_array($status, ['active', 'draft', 'archived'], true)) return [];
+    if (!$db || $limit <= 0 || !in_array($status, ['active', 'inactive', 'draft', 'archived'], true)) return [];
 
     try {
         $stmt = $db->prepare("
@@ -359,24 +357,24 @@ function savePortfolioItem(array $data): bool {
     unset($data['id']);
     $columns = ['title', 'slug', 'description', 'client_name', 'service_type', 'technologies',
         'image', 'gallery', 'project_url', 'github_url', 'testimonial', 'testimonial_author',
-        'sort_order', 'status'];
+        'sort_order', 'status', 'long_description', 'results', 'year'];
     if (!$data || array_diff(array_keys($data), $columns)) return false;
-    if (isset($data['status']) && !in_array($data['status'], ['active', 'draft', 'archived'], true)) return false;
+    if (isset($data['status']) && !in_array($data['status'], ['active', 'inactive', 'draft', 'archived'], true)) return false;
 
     try {
-        foreach (['gallery', 'technologies'] as $column) {
+        foreach (['gallery', 'technologies', 'results'] as $column) {
             if (isset($data[$column]) && is_array($data[$column])) {
                 $data[$column] = json_encode($data[$column], JSON_THROW_ON_ERROR);
             }
         }
 
         if ($id > 0) {
-            $fields = array_map(static fn(string $column): string => "`$column` = ?", array_keys($data));
+            $fields = array_map(static fn(string $column): string => "$column = ?", array_keys($data));
             $stmt = $db->prepare("UPDATE portfolio_items SET " . implode(', ', $fields) . " WHERE id = ?");
             return $stmt->execute([...array_values($data), $id]);
         }
 
-        $fields = '`' . implode('`, `', array_keys($data)) . '`';
+        $fields = implode(', ', array_keys($data));
         $placeholders = implode(', ', array_fill(0, count($data), '?'));
         $stmt = $db->prepare("INSERT INTO portfolio_items ($fields) VALUES ($placeholders)");
         return $stmt->execute(array_values($data));
@@ -892,7 +890,7 @@ function auditLog(string $action, string $entityType, int $entityId, ?array $old
             $entityId,
             $oldValues ? json_encode($oldValues) : null,
             $newValues ? json_encode($newValues) : null,
-            inet_pton($_SERVER['REMOTE_ADDR'] ?? '0.0.0.0'),
+            $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0',
             sanitize(substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255)),
         ]);
     } catch (PDOException $e) {
@@ -1014,72 +1012,29 @@ function uploadFile(array $file, string $directory, array $allowedTypes = [], in
     return $result;
 }
 
+function vueportsRateLimit(string $key, int $maxAttempts, int $windowSeconds): bool {
+    $db = db();
+    if (!$db) return false;
+    $stmt = $db->prepare("INSERT INTO app_rate_limits(rate_key, attempts, expires_at)
+        VALUES (?, 1, NOW() + CAST(? AS INTEGER) * INTERVAL '1 second')
+        ON CONFLICT(rate_key) DO UPDATE SET
+          attempts = CASE WHEN app_rate_limits.expires_at <= NOW() THEN 1 ELSE app_rate_limits.attempts + 1 END,
+          expires_at = CASE WHEN app_rate_limits.expires_at <= NOW() THEN EXCLUDED.expires_at ELSE app_rate_limits.expires_at END
+        RETURNING attempts");
+    $stmt->execute([hash('sha256', $key), max(1, $windowSeconds)]);
+    return (int) $stmt->fetchColumn() <= $maxAttempts;
+}
+
 function rateLimit(string $key, int $maxAttempts = 60, int $windowSeconds = 60): bool {
     if (getSetting('rate_limit_enabled', 'true') !== 'true') return true;
-    
-    $dir = __DIR__ . '/../cache/ratelimit';
-    if (!is_dir($dir)) mkdir($dir, 0755, true);
-    
-    $file = $dir . '/' . preg_replace('/[^a-z0-9_-]/', '', $key) . '.json';
-    $now = time();
-    $data = ['count' => 0, 'reset' => $now + $windowSeconds];
-    
-    if (file_exists($file)) {
-        $data = json_decode(file_get_contents($file), true) ?: $data;
-        if ($data['reset'] < $now) {
-            $data = ['count' => 0, 'reset' => $now + $windowSeconds];
-        }
-    }
-    
-    $data['count']++;
-    file_put_contents($file, json_encode($data), LOCK_EX);
-    
-    return $data['count'] <= $maxAttempts;
+    return vueportsRateLimit('general:' . $key, $maxAttempts, $windowSeconds);
 }
 
 function loadEnv(): array {
-    static $env = null;
-    if ($env !== null) return $env;
-    
-    $env = [];
-    $file = __DIR__ . '/../.env';
-    
-    if (!file_exists($file)) {
-        $file = __DIR__ . '/../.env.example';
-    }
-    
-    if (file_exists($file)) {
-        foreach (file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
-            if (str_starts_with(trim($line), '#')) continue;
-            if (!str_contains($line, '=')) continue;
-            [$key, $value] = explode('=', $line, 2);
-            $env[trim($key)] = trim($value);
-        }
-    }
-    
-    return $env;
+    return array_merge($_ENV, getenv() ?: []);
 }
 
-// Initialize environment
-$env = loadEnv();
-foreach ($env as $key => $value) {
-    if (!isset($_ENV[$key])) {
-        $existing = getenv($key);
-        $_ENV[$key] = $existing === false ? $value : $existing;
-        if ($existing === false) {
-            putenv("$key=$value");
-        }
-    }
-}
-
-// Session security — FIXED: Only start if not already active
-if (PHP_SAPI !== 'cli' && session_status() === PHP_SESSION_NONE) {
-    ini_set('session.cookie_httponly', '1');
-    ini_set('session.cookie_secure', $_ENV['SESSION_SECURE'] ?? '0');
-    ini_set('session.cookie_samesite', $_ENV['SESSION_SAMESITE'] ?? 'Lax');
-    ini_set('session.gc_maxlifetime', (int) ($_ENV['SESSION_LIFETIME'] ?? 120) * 60);
-    session_start();
-}
+// Session settings and shared PostgreSQL storage are initialized by config/bootstrap.php.
 
 // FIXED: Added helper to safely decode JSON from DB fields
 function safeJsonDecode(?string $json, array $default = []): array {
@@ -1166,7 +1121,7 @@ function queueEmail(string $toEmail, string $toName, string $subjectOrTemplateKe
     try {
         $stmt = $db->prepare("INSERT INTO email_queue 
             (to_email, to_name, subject, body_html, body_text, from_email, from_name, status, created_at) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', NOW())");
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', NOW()) RETURNING id");
         
         $stmt->execute([
             filter_var(trim($toEmail), FILTER_SANITIZE_EMAIL),
@@ -1178,8 +1133,9 @@ function queueEmail(string $toEmail, string $toName, string $subjectOrTemplateKe
             $fromName,
         ]);
         
-        error_log("queueEmail: Queued email to $toEmail, ID " . $db->lastInsertId());
-        return (int) $db->lastInsertId();
+        $queuedId = (int) $stmt->fetchColumn();
+        error_log("queueEmail: Queued email record #" . $queuedId);
+        return $queuedId;
         
     } catch (PDOException $e) {
         error_log("queueEmail DB error: " . $e->getMessage());

@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require_once 'includes/functions.php';
+require_once __DIR__ . '/includes/functions.php';
 
 $slug = $_GET['slug'] ?? '';
 if (!$slug) redirect('services.php');
@@ -16,13 +16,13 @@ if ($db) {
 if (!$service) redirect('services.php');
 
 $pageTitle = $service['title'];
-require_once 'includes/header.php';
+require_once __DIR__ . '/includes/header.php';
 $features = json_decode($service['features'] ?? '[]', true);
 
 // Related services
 $related = [];
 if ($db) {
-    $stmt = $db->prepare("SELECT * FROM services WHERE slug != ? AND status = 'active' ORDER BY RAND() LIMIT 2");
+    $stmt = $db->prepare("SELECT * FROM services WHERE slug != ? AND status = 'active' ORDER BY RANDOM() LIMIT 2");
     $stmt->execute([$slug]);
     $related = $stmt->fetchAll();
 }
@@ -86,4 +86,4 @@ if ($db) {
     </div>
 </section>
 
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

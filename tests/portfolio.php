@@ -29,7 +29,7 @@ try {
             'slug' => $prefix . '-' . $name,
             'description' => 'Portfolio regression fixture.',
             'service_type' => $name === 'other-category' ? $prefix . '-other' : $category,
-            'technologies' => ['PHP', 'MySQL'],
+            'technologies' => ['PHP', 'PostgreSQL'],
             'image' => 'Finlytics.png',
             'gallery' => ['images/Finlytics1.png'],
             'project_url' => 'https://example.invalid/' . $prefix,
@@ -43,12 +43,14 @@ try {
             unset($record['technologies'], $record['project_url']);
         }
         portfolioCheck(savePortfolioItem($record), 'Could not save a portfolio fixture.');
-        $ids[$name] = (int)$database->lastInsertId();
+        $lookup = $database->prepare('SELECT id FROM portfolio_items WHERE slug = ?');
+        $lookup->execute([$record['slug']]);
+        $ids[$name] = (int)$lookup->fetchColumn();
     }
 
     $main = getPortfolioItemBySlug($prefix . '-main');
     portfolioCheck($main !== null && (int)$main['id'] === $ids['main'], 'Published item lookup failed.');
-    portfolioCheck($main['technologies'] === ['PHP', 'MySQL']
+    portfolioCheck($main['technologies'] === ['PHP', 'PostgreSQL']
         && $main['tech_stack'] === $main['technologies'], 'Technology JSON or view mapping failed.');
     portfolioCheck($main['live_url'] === $main['project_url'], 'Project link mapping failed.');
     portfolioCheck($main['image'] === 'images/Finlytics.png'
@@ -103,3 +105,4 @@ try {
 portfolioCheck((int)$database->query('SELECT COUNT(*) FROM portfolio_items')->fetchColumn() === $originalCount,
     'Portfolio fixture cleanup failed.');
 echo "PASS portfolio lookup, listing, related items, JSON fields, rendering, update and archival; fixtures rolled back.\n";
+

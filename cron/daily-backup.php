@@ -1,93 +1,20 @@
 <?php
 declare(strict_types=1);
-// cron/daily-backup.php — Automated Database & File Backup
-
-require_once '../includes/functions.php';
-
-// CLI only for security
-if (php_sapi_name() !== 'cli') {
-    http_response_code(403);
-    exit('CLI only');
-}
-
-$db = db();
-if (!$db) exit('Database connection failed');
-
-$backupDir = '../backups';
-if (!is_dir($backupDir)) mkdir($backupDir, 0755, true);
-
-$date = date('Y-m-d_H-i-s');
-$sqlFile = "$backupDir/vueports_db_$date.sql";
-$zipFile = "$backupDir/vueports_backup_$date.zip";
-
-echo "[" . date('c') . "] Starting backup...\n";
-
-// ── MYSQL DUMP ──
-$env = loadEnv();
-$cmd = sprintf(
-    'mysqldump -h%s -u%s -p%s %s --single-transaction --quick --lock-tables=false > %s 2>&1',
-    escapeshellarg($env['DB_HOST'] ?? 'localhost'),
-    escapeshellarg($env['DB_USER'] ?? 'root'),
-    escapeshellarg($env['DB_PASS'] ?? ''),
-    escapeshellarg($env['DB_NAME'] ?? 'vueports_db'),
-    escapeshellarg($sqlFile)
-);
-
-exec($cmd, $output, $returnCode);
-
-if ($returnCode !== 0 || !file_exists($sqlFile) || filesize($sqlFile) === 0) {
-    echo "[" . date('c') . "] ERROR: mysqldump failed\n";
-    error_log("Backup failed: mysqldump error code $returnCode");
-    exit(1);
-}
-
-echo "[" . date('c') . "] Database dumped: $sqlFile (" . round(filesize($sqlFile)/1024, 1) . " KB)\n";
-
-// ── ZIP ARCHIVE (DB + uploads) ──
-$zip = new ZipArchive();
-if ($zip->open($zipFile, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
-    $zip->addFile($sqlFile, basename($sqlFile));
-    
-    // Add uploads recursively
-    $uploadsDir = realpath('../uploads');
-    if ($uploadsDir) {
-        $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($uploadsDir));
-        foreach ($files as $file) {
-            if ($file->isDir()) continue;
-            $relative = 'uploads/' . substr($file->getRealPath(), strlen($uploadsDir) + 1);
-            $zip->addFile($file->getRealPath(), $relative);
-        }
-    }
-    
-    $zip->close();
-    echo "[" . date('c') . "] Archive created: $zipFile (" . round(filesize($zipFile)/1048576, 2) . " MB)\n";
-    
-    // Remove raw SQL after zipping
-    unlink($sqlFile);
-} else {
-    echo "[" . date('c') . "] ERROR: Failed to create zip\n";
-    exit(1);
-}
-
-// ── ROTATE OLD BACKUPS (keep 14 days) ──
-$cutoff = strtotime('-14 days');
-foreach (glob("$backupDir/vueports_backup_*.zip") as $file) {
-    if (filemtime($file) < $cutoff) {
-        unlink($file);
-        echo "[" . date('c') . "] Deleted old backup: " . basename($file) . "\n";
-    }
-}
-
-// ── OPTIONAL: S3 UPLOAD ──
-$s3Bucket = $env['BACKUP_S3_BUCKET'] ?? '';
-if ($s3Bucket && !empty($env['AWS_ACCESS_KEY'])) {
-    $s3Key = 'backups/' . basename($zipFile);
-    $s3Region = $env['BACKUP_S3_REGION'] ?? 'af-south-1';
-    
-    $dateStr = gmdate('Ymd\THis\Z');
-    $scope = date('Ymd') . "/$s3Region/s3/aws4_request";
-    // S3 upload via AWS SDK would go here; placeholder for now
-    echo "[" . date('c') . "] S3 upload configured but requires AWS SDK\n";
-}
-
-echo "[" . date('c') . "] Backup completed successfully.\n";
+if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
+require_once dirname(__DIR__) . '/config/postgres.php';
+try {
+    $config = vueports_postgres_config(true);
+    $directory = env('BACKUP_DIR', sys_get_temp_dir() . '/vueports-backups');
+    if (!is_dir($directory) && !mkdir($directory, 0700, true)) throw new RuntimeException('Backup directory cannot be created.');
+    $filename = $directory . '/vueports_' . gmdate('Y-m-d_H-i-s') . '.dump';
+    $processEnv = array_merge(getenv() ?: [], ['PGHOST' => $config['host'], 'PGPORT' => $config['port'], 'PGDATABASE' => $config['database'], 'PGUSER' => $config['user'], 'PGPASSWORD' => $config['password']]);
+    foreach ($config['parameters'] as $key => $value) $processEnv['PG' . strtoupper($key)] = $value;
+    $binary = env('PG_DUMP_BINARY', 'pg_dump');
+    $process = proc_open([$binary, '--no-password', '--format=custom', '--file=' . $filename], [0 => ['pipe','r'], 1 => ['pipe','w'], 2 => ['pipe','w']], $pipes, null, $processEnv, ['bypass_shell' => true]);
+    if (!is_resource($process)) throw new RuntimeException('pg_dump could not be started.');
+    fclose($pipes[0]); $output = stream_get_contents($pipes[1]);fclose($pipes[1]);$error = stream_get_contents($pipes[2]);fclose($pipes[2]);
+    $code = proc_close($process);
+    if ($code !== 0 || !is_file($filename) || filesize($filename) === 0) { if (is_file($filename)) unlink($filename);throw new RuntimeException('pg_dump failed. Verify the client version and direct connection.'); }
+    chmod($filename,0600);
+    echo 'PostgreSQL backup created: ' . $filename . "\nCopy it to durable private storage before the hosting instance is replaced.\n";
+} catch (Throwable $error) {fwrite(STDERR, "Backup failed. Verify PG_DUMP_BINARY, BACKUP_DIR and the direct database connection.\n");exit(1);}

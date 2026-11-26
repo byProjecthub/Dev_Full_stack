@@ -142,6 +142,7 @@ $pageTitle = 'Bookings';
         .edit-form textarea { grid-column: 1 / -1; }
         .action-btns { display: flex; gap: 4px; }
     </style>
+<link rel="stylesheet" href="../assets/css/vueports-light.css?v=20261126">
 </head>
 <body class="admin-body">
     <aside class="admin-sidebar">

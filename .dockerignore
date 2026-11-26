@@ -1,10 +1,23 @@
 .git
+.github
 .env
 .env.*
 !.env.example
+**/.env
+**/.env.*
+!**/.env.example
 vendor
 config/google-credentials.json
+backups
 logs
 cache
-uploads
-hs_err_pid*.log
+tests
+docs
+*.sql
+!database/*.sql
+*.pdf
+*.zip
+*.log
+itn_raw.txt
+* - Copy.php
+* - Copy.sql

@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-require_once 'config/database.php';
-require_once 'includes/functions.php';
-require_once 'includes/emails.php';
-require_once 'includes/security.php';
+require_once __DIR__ . '/config/database.php';
+require_once __DIR__ . '/includes/functions.php';
+require_once __DIR__ . '/includes/emails.php';
+require_once __DIR__ . '/includes/security.php';
 
 $success = '';
 $error = '';
@@ -33,9 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 error_log('CONTACT FORM ERROR: db() returned null');
             } else {
                 try {
-                    $stmt = $db->prepare("INSERT INTO messages (name, email, phone, subject, message, service_interest, status, created_at) VALUES (?,?,?,?,?,?, 'new', NOW())");
+                    $stmt = $db->prepare("INSERT INTO messages (name, email, phone, subject, message, service_interest, status, created_at) VALUES (?,?,?,?,?,?, 'new', NOW()) RETURNING id");
                     $stmt->execute([$name, $email, $phone, $subject, $message, $service]);
-                    $messageId = (int) $db->lastInsertId();
+                    $messageId = (int) $stmt->fetchColumn();
                     
                     if ($messageId === 0) {
                         throw new Exception('Insert succeeded but no ID returned');
@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $pageTitle = 'Contact';
-require_once 'includes/header.php';
+require_once __DIR__ . '/includes/header.php';
 ?>
 
 <section class="page-header">
@@ -200,4 +200,4 @@ require_once 'includes/header.php';
   </div>
 </section>
 
-<?php include 'includes/footer.php'; ?>
+<?php include __DIR__ . '/includes/footer.php'; ?>
