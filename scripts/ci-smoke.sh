@@ -104,7 +104,7 @@ docker run --rm --network none \
 # Verify writes as the actual Apache worker and deny uploaded executable files.
 docker exec --user www-data "$app" php -r '
     file_put_contents("/var/www/html/uploads/ci-smoke.php", "<?php echo \"EXECUTED_UPLOAD\"; ?>");
-    file_put_contents("/var/www/html/uploads/ci-smoke.txt", "STATIC_UPLOAD_OK");'
+    file_put_contents("/var/www/html/uploads/ci-smoke.css", "/* STATIC_UPLOAD_OK */");'
 address="$(docker port "$app" 80/tcp)"
 python3 - "http://$address" <<'PY'
 import html
@@ -188,7 +188,7 @@ for path in ['/.env', '/.git/config', '/database.sql', '/database%20-%20Copy.sql
             continue
         error.close()
     raise RuntimeError(f'{path}: private or executable file was accessible')
-if request('/uploads/ci-smoke.txt')[0] != 'STATIC_UPLOAD_OK':
+if request('/uploads/ci-smoke.css')[0] != '/* STATIC_UPLOAD_OK */':
     raise RuntimeError('Static uploads cannot be served')
 print('PASS production HTTP pages, health, login forms, CSS, API registration/login/token refresh, private paths and upload execution protection')
 PY
